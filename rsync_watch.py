@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 import re
+from send_nsca import send_nsca
 
 
 class RsyncWatchError(Exception):
@@ -17,13 +18,21 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='A Python script to monitor the execution of a rsync task.'
     )
+
+    parser.add_argument(
+        '--nsca-remote-host',
+        help='IP address of the NSCA remote host.'
+    )
+
     parser.add_argument(
         'src',
         help='The source ([[USER@]HOST:]SRC)'
     )
+
     parser.add_argument(
         'dest',
-        help='The destination ([[USER@]HOST:]DEST)')
+        help='The destination ([[USER@]HOST:]DEST)'
+    )
 
     return parser.parse_args()
 
@@ -172,6 +181,10 @@ def main():
         stderr=subprocess.STDOUT,
     )
     print(process.stdout)
+
+    send_nsca(status=2, host_name=b'vaio', service_name=b'dotfiles',
+              text_output=b'test with python',
+              remote_host=args.nsca_remote_host)
 
 
 if __name__ == "__main__":

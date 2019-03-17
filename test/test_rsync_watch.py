@@ -67,7 +67,7 @@ class TestIntegration(unittest.TestCase):
         )
         self.assertEqual(process.returncode, 2)
         self.assertIn(
-            'the following arguments are required: src, dest',
+            'the following arguments are required:',
             process.stderr
         )
 
@@ -79,7 +79,7 @@ class TestIntegration(unittest.TestCase):
         )
         self.assertEqual(process.returncode, 0)
         self.assertIn(
-            'usage: rsync_watch.py [-h] src dest',
+            'usage: rsync_watch.py',
             process.stdout
         )
 
