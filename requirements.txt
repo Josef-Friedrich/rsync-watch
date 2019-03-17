@@ -1,0 +1,1 @@
+-e git+https://github.com/Yelp/send_nsca.git@master#egg=send_nsca
