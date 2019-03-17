@@ -5,7 +5,6 @@ import subprocess
 import re
 
 
-
 class RsyncWatchError(Exception):
     """Base exception for this script."""
 
@@ -114,7 +113,8 @@ def parse_stats(stdout):
         raise StatsNotFoundError('File list generation time: X.XXX seconds')
 
     # list_transfer_time
-    match = re.search(r'\nFile list transfer time: ([\d\.]*) seconds\n', stdout)
+    match = re.search(r'\nFile list transfer time: ([\d\.]*) seconds\n',
+                      stdout)
     if match:
         result['list_transfer_time'] = float(match[1])
     else:
@@ -135,6 +135,31 @@ def parse_stats(stdout):
         raise StatsNotFoundError('Total bytes received: X')
 
     return result
+
+
+def check_host(ssh_host, hostname=''):
+    """Check if the given host is online by retrieving its hostname.
+
+    :param string ssh_host: A ssh host string in the form of: `user@hostname`
+      or `hostname` or `alias` (as specified in `~/.ssh/config`)
+
+    :param string hostname: The hostname to check from the UNIX command
+      `hostname`.
+
+    :return: True or False
+    :rtype: boolean
+    """
+    if not hostname:
+        hostname = ssh_host
+    process = subprocess.run(
+        ['ssh', ssh_host, 'hostname'],
+        encoding='utf-8',
+        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+    )
+    if process.returncode == 0 and process.stdout.strip() == hostname:
+        return True
+    return False
 
 
 def main():
