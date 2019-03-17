@@ -28,6 +28,25 @@ sent 61 bytes  received 17 bytes  156.00 bytes/sec
 total size is 0  speedup is 0.00
 '''
 
+OUTPUT_REAL = '''
+Number of files: 4,928 (reg: 3,256, dir: 1,672)
+Number of created files: 112 (reg: 64, dir: 48)
+Number of deleted files: 214 (reg: 125, dir: 89)
+Number of regular files transferred: 64
+Total file size: 4,222,882,233 bytes
+Total transferred file size: 13,472,638 bytes
+Literal data: 13,472,638 bytes
+Matched data: 0 bytes
+File list size: 65,536
+File list generation time: 0.001 seconds
+File list transfer time: 0.000 seconds
+Total bytes sent: 13,631,370
+Total bytes received: 19,859
+
+sent 13,631,370 bytes  received 19,859 bytes  700,063.03 bytes/sec
+total size is 4,222,882,233  speedup is 309.34
+'''
+
 
 class TestUnitParseStats(unittest.TestCase):
 
@@ -35,13 +54,12 @@ class TestUnitParseStats(unittest.TestCase):
         with self.assertRaises(StatsNotFoundError) as exception:
             parse_stats('')
         self.assertEqual(str(exception.exception),
-                         'Number of files: X (dir: X)')
+                         'Number of files: X,XXX (reg: X,XXX, dir: X,XXX)')
 
     def test_output1(self):
         result = parse_stats(OUTPUT1)
         self.assertEqual(result, {
             'num_files': 1,
-            'num_dirs': 2,
             'num_created_files': 3,
             'num_deleted_files': 4,
             'num_files_transferred': 5,
@@ -54,6 +72,24 @@ class TestUnitParseStats(unittest.TestCase):
             'list_transfer_time': 12.000,
             'bytes_sent': 13,
             'bytes_received': 14,
+        })
+
+    def test_output_real(self):
+        result = parse_stats(OUTPUT_REAL)
+        self.assertEqual(result, {
+            'num_files': 4928,
+            'num_created_files': 112,
+            'num_deleted_files': 214,
+            'num_files_transferred': 64,
+            'total_size': 4222882233,
+            'transferred_size': 13472638,
+            'literal_data': 13472638,
+            'matched_data': 0,
+            'list_size': 65536,
+            'list_generation_time': 0.001,
+            'list_transfer_time': 0.000,
+            'bytes_sent': 13631370,
+            'bytes_received': 19859,
         })
 
 
