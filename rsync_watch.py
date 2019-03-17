@@ -219,9 +219,10 @@ def main():
     )
     print(process.stdout)
 
-    send_nsca(status=2, host_name=b'vaio', service_name=b'dotfiles',
-              text_output=b'test with python',
-              remote_host=args.nsca_remote_host)
+    if hasattr(args, 'nsca_remote_host'):
+        send_nsca(status=2, host_name=b'vaio', service_name=b'dotfiles',
+                  text_output=b'test with python',
+                  remote_host=args.nsca_remote_host)
 
 
 if __name__ == "__main__":

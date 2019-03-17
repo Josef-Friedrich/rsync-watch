@@ -2,6 +2,8 @@ import unittest
 import subprocess
 import os
 from rsync_watch import parse_stats, StatsNotFoundError, service_name
+import rsync_watch
+from unittest.mock import patch
 
 SCRIPT = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', 'rsync_watch.py')
@@ -46,6 +48,15 @@ Total bytes received: 19,859
 sent 13,631,370 bytes  received 19,859 bytes  700,063.03 bytes/sec
 total size is 4,222,882,233  speedup is 309.34
 '''
+
+
+def patch_mulitple(args):
+    with patch('sys.argv',  ['cmd'] + list(args)), \
+         patch('subprocess.run') as subprocess_run:
+        rsync_watch.main()
+    return {
+        'subprocess_run': subprocess_run
+    }
 
 
 class TestUnitParseStats(unittest.TestCase):
@@ -114,6 +125,18 @@ class TestUnitServiceName(unittest.TestCase):
             service,
             'rsync_wnas_serverway-var-backups-mysql_'
             'data-backup-host-serverway-mysql'
+        )
+
+
+class TestIntegrationMock(unittest.TestCase):
+
+    def test_minimal(self):
+        mock_objects = patch_mulitple(['tmp1', 'tmp2'])
+        mock_objects['subprocess_run'].assert_called_with(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8',
+            stderr=-2,
+            stdout=-1
         )
 
 
