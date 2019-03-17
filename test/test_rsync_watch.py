@@ -21,6 +21,18 @@ class TestIntegration(unittest.TestCase):
             process.stderr
         )
 
+    def test_help(self):
+        process = subprocess.run(
+            [SCRIPT, '--help'],
+            encoding='utf-8',
+            stdout=subprocess.PIPE
+        )
+        self.assertEqual(process.returncode, 0)
+        self.assertIn(
+            'usage: rsync-watch.py [-h] src dest',
+            process.stdout
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
