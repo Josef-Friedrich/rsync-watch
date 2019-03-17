@@ -27,7 +27,7 @@ def parse_args():
 
     parser.add_argument(
         '--raise-exception',
-        default=True,
+        action='store_true',
         help='Raise an exception if one check doesn’t pass, else the rsync '
              'job gets skipped.',
     )

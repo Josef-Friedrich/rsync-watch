@@ -1,9 +1,15 @@
 import unittest
 import subprocess
 import os
-from rsync_watch import parse_stats, StatsNotFoundError, service_name
+from rsync_watch import \
+    parse_stats, \
+    RsyncWatchError, \
+    service_name, \
+    StatsNotFoundError
+
 import rsync_watch
 from unittest.mock import patch
+from unittest import mock
 
 SCRIPT = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', 'rsync_watch.py')
@@ -50,9 +56,12 @@ total size is 4,222,882,233  speedup is 309.34
 '''
 
 
-def patch_mulitple(args):
+def patch_mulitple(args, mocks=[]):
     with patch('sys.argv',  ['cmd'] + list(args)), \
          patch('subprocess.run') as subprocess_run:
+
+        if mocks:
+            subprocess_run.side_effect = mocks
         rsync_watch.main()
     return {
         'subprocess_run': subprocess_run
@@ -137,6 +146,54 @@ class TestIntegrationMock(unittest.TestCase):
             encoding='utf-8',
             stderr=-2,
             stdout=-1
+        )
+
+    def test_check_ping_raise_exception_fail(self):
+        with self.assertRaises(RsyncWatchError) as exception:
+            patch_mulitple(
+                ['--raise-exception', '--check-ping', '8.8.8.8', 'tmp1',
+                 'tmp2'],
+                [mock.Mock(returncode=1), mock.Mock()]
+            )
+        self.assertEqual(str(exception.exception),
+                         'ping: “8.8.8.8” is not reachable.')
+
+    def test_check_ping_raise_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--raise-exception', '--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
+            [mock.Mock(returncode=0), mock.Mock()]
+        )
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
+        mock_objects['subprocess_run'].assert_any_call(
+            ['ping', '-c', 3, '8.8.8.8']
+        )
+        mock_objects['subprocess_run'].assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    def test_check_ping_no_exception_fail(self):
+        mock_objects = patch_mulitple(
+            ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
+            [mock.Mock(returncode=1), mock.Mock()]
+        )
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
+        mock_objects['subprocess_run'].assert_called_with(
+            ['ping', '-c', 3, '8.8.8.8']
+        )
+
+    def test_check_ping_no_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
+            [mock.Mock(returncode=0), mock.Mock()]
+        )
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
+        mock_objects['subprocess_run'].assert_any_call(
+            ['ping', '-c', 3, '8.8.8.8']
+        )
+        mock_objects['subprocess_run'].assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
         )
 
 
