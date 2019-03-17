@@ -1,7 +1,7 @@
 import unittest
 import subprocess
 import os
-from rsync_watch import parse_stats, StatsNotFoundError
+from rsync_watch import parse_stats, StatsNotFoundError, service_name
 
 SCRIPT = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', 'rsync_watch.py')
@@ -91,6 +91,30 @@ class TestUnitParseStats(unittest.TestCase):
             'bytes_sent': 13631370,
             'bytes_received': 19859,
         })
+
+
+class TestUnitServiceName(unittest.TestCase):
+
+    def test_special_characters(self):
+        self.assertEqual(service_name('/@:.', '', ''), 'rsync_')
+
+    def test_dash_underscore(self):
+        self.assertEqual(service_name('-_-', '', ''), 'rsync_')
+
+    def test_multiple_dashs_underscore(self):
+        self.assertEqual(service_name('---_---', '', ''), 'rsync_')
+
+    def test_real_world(self):
+        service = service_name(
+            'wnas',
+            'serverway:/var/backups/mysql',
+            '/data/backup/host/serverway/mysql'
+        )
+        self.assertEqual(
+            service,
+            'rsync_wnas_serverway-var-backups-mysql_'
+            'data-backup-host-serverway-mysql'
+        )
 
 
 class TestIntegration(unittest.TestCase):

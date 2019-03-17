@@ -162,6 +162,27 @@ def parse_stats(stdout):
     return result
 
 
+def service_name(hostname, src, dest):
+    """Format a service name to use as a Nagios or Icinga service name.
+
+    :param string hostname: The hostname of the machine the rsync job running
+      on.
+    :param string src: A source string rsync understands
+    :param string dest: A destination string rsync understands
+
+    :return: The service name
+    :rtype: string
+    """
+    result = 'rsync_{}_{}_{}'.format(hostname, src, dest)
+    result = re.sub(r'[/@:\.]', '-', result)
+    result = re.sub(r'-*_-*', '_', result)
+    result = re.sub(r'-{2,}', '-', result)
+    result = re.sub(r'_{2,}', '_', result)
+    result = re.sub(r'-$', '', result)
+    result = re.sub(r'^-', '', result)
+    return result
+
+
 def check_host(ssh_host, hostname=''):
     """Check if the given host is online by retrieving its hostname.
 
