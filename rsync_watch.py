@@ -20,6 +20,34 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--check-hostname',
+        help='Check if a remote host is reachable over the network by SSHing '
+             'into it and retrieve its hostname.'
+    )
+
+    parser.add_argument(
+        '--raise-exception',
+        default=True,
+        help='Raise an exception if one check doesn’t pass, else the rsync '
+             'job gets skipped.',
+    )
+
+    parser.add_argument(
+        '--check-file',
+        help='Check if a file exists.'
+    )
+
+    parser.add_argument(
+        '--check-mount',
+        help='Check if a mount point exists.'
+    )
+
+    parser.add_argument(
+        '--check-ping',
+        help='Check if a remote host is reachable by pinging.'
+    )
+
+    parser.add_argument(
         '--nsca-remote-host',
         help='IP address of the NSCA remote host.'
     )
@@ -183,41 +211,75 @@ def service_name(hostname, src, dest):
     return result
 
 
-def check_host(ssh_host, hostname=''):
-    """Check if the given host is online by retrieving its hostname.
+class Checks:
+    """Collect multiple check results."""
 
-    :param string ssh_host: A ssh host string in the form of: `user@hostname`
-      or `hostname` or `alias` (as specified in `~/.ssh/config`)
+    def __init__(self, raise_exception=True):
+        self.raise_exception = raise_exception
+        self._messages = []
+        self.passed = True
 
-    :param string hostname: The hostname to check from the UNIX command
-      `hostname`.
+    @property
+    def messages(self):
+        return ' '.join(self._messages)
 
-    :return: True or False
-    :rtype: boolean
-    """
-    if not hostname:
-        hostname = ssh_host
-    process = subprocess.run(
-        ['ssh', ssh_host, 'hostname'],
-        encoding='utf-8',
-        stderr=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-    )
-    if process.returncode == 0 and process.stdout.strip() == hostname:
-        return True
-    return False
+    def _log_fail(self, message):
+        self._messages.append(message)
+        self.passed = False
+
+    def check_ping(self, dest):
+        process = subprocess.run(['ping', '-c', 3, dest])
+        if process.returncode != 0:
+            self._log_fail('ping: “{}” is not reachable.'.format(dest))
+
+    def check_hostname(self, ssh_host, hostname=''):
+        """Check if the given host is online by retrieving its hostname.
+
+        :param string ssh_host: A ssh host string in the form of:
+          `user@hostname` or `hostname` or `alias` (as specified in
+          `~/.ssh/config`)
+        :param string hostname: The hostname to check from the UNIX command
+          `hostname`.
+
+        :return: True or False
+        :rtype: boolean
+        """
+        if not hostname:
+            hostname = ssh_host
+        process = subprocess.run(
+            ['ssh', ssh_host, 'hostname'],
+            encoding='utf-8',
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+        )
+        if not (process.returncode == 0 and
+                process.stdout.strip() == hostname):
+            self._log_fail('hostname: “{}” is not reachable.'.format(ssh_host))
+
+    def has_passed(self):
+        if self.raise_exception and not self.passed:
+            raise RsyncWatchError(self.messages)
+        return self.passed
 
 
 def main():
     args = parse_args()
 
-    process = subprocess.run(
-        ['rsync', '-av', '--stats', args.src, args.dest],
-        encoding='utf-8',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    print(process.stdout)
+    checks = Checks(raise_exception=args.raise_exception)
+
+    if args.check_ping:
+        checks.check_ping(args.check_ping)
+
+    if checks.has_passed():
+        process = subprocess.run(
+            ['rsync', '-av', '--stats', args.src, args.dest],
+            encoding='utf-8',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        print(process.stdout)
+    else:
+        print(checks.messages)
 
     if hasattr(args, 'nsca_remote_host'):
         send_nsca(status=2, host_name=b'vaio', service_name=b'dotfiles',
