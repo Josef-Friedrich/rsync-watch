@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 import re
+import socket
 from send_nsca import send_nsca
 
 
@@ -17,6 +18,11 @@ class StatsNotFoundError(RsyncWatchError):
 def parse_args():
     parser = argparse.ArgumentParser(
         description='A Python script to monitor the execution of a rsync task.'
+    )
+
+    parser.add_argument(
+        '--host-name',
+        help='The hostname to submit over NSCA to the monitoring.',
     )
 
     parser.add_argument(
@@ -190,10 +196,18 @@ def parse_stats(stdout):
     return result
 
 
-def service_name(hostname, src, dest):
+def format_performance_data(stats):
+    pairs = []
+    for key, value in stats.items():
+        pairs.append('{}={}'.format(key, value))
+
+    return ' '.join(pairs)
+
+
+def service_name(host_name, src, dest):
     """Format a service name to use as a Nagios or Icinga service name.
 
-    :param string hostname: The hostname of the machine the rsync job running
+    :param string host_name: The hostname of the machine the rsync job running
       on.
     :param string src: A source string rsync understands
     :param string dest: A destination string rsync understands
@@ -201,7 +215,7 @@ def service_name(hostname, src, dest):
     :return: The service name
     :rtype: string
     """
-    result = 'rsync_{}_{}_{}'.format(hostname, src, dest)
+    result = 'rsync_{}_{}_{}'.format(host_name, src, dest)
     result = re.sub(r'[/@:\.]', '-', result)
     result = re.sub(r'-*_-*', '_', result)
     result = re.sub(r'-{2,}', '-', result)
@@ -278,13 +292,27 @@ def main():
             stderr=subprocess.STDOUT,
         )
         print(process.stdout)
+        if args.nsca_remote_host:
+            if not args.host_name:
+                host_name = socket.gethostname()
+            else:
+                host_name = args.host_name
+
+            service = service_name(host_name, args.src, args.dest)
+            stats = parse_stats(process.stdout)
+            text_output = 'RSYNC OK | {}'.format(
+                format_performance_data(stats)
+            )
+
+            send_nsca(
+                status=0,
+                host_name=host_name.encode(),
+                service_name=service.encode(),
+                text_output=text_output.encode(),
+                remote_host=args.nsca_remote_host.encode()
+            )
     else:
         print(checks.messages)
-
-    if hasattr(args, 'nsca_remote_host'):
-        send_nsca(status=2, host_name=b'vaio', service_name=b'dotfiles',
-                  text_output=b'test with python',
-                  remote_host=args.nsca_remote_host)
 
 
 if __name__ == "__main__":

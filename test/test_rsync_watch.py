@@ -2,6 +2,7 @@ import unittest
 import subprocess
 import os
 from rsync_watch import \
+    format_performance_data, \
     parse_stats, \
     RsyncWatchError, \
     service_name, \
@@ -58,13 +59,15 @@ total size is 4,222,882,233  speedup is 309.34
 
 def patch_mulitple(args, mocks=[]):
     with patch('sys.argv',  ['cmd'] + list(args)), \
+         patch('rsync_watch.send_nsca') as send_nsca, \
          patch('subprocess.run') as subprocess_run:
 
         if mocks:
             subprocess_run.side_effect = mocks
         rsync_watch.main()
     return {
-        'subprocess_run': subprocess_run
+        'subprocess_run': subprocess_run,
+        'send_nsca': send_nsca,
     }
 
 
@@ -140,12 +143,23 @@ class TestUnitServiceName(unittest.TestCase):
 class TestIntegrationMock(unittest.TestCase):
 
     def test_minimal(self):
-        mock_objects = patch_mulitple(['tmp1', 'tmp2'])
+        mock_objects = patch_mulitple(
+            ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
+             'tmp2'],
+            [mock.Mock(stdout=OUTPUT1)]
+        )
         mock_objects['subprocess_run'].assert_called_with(
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8',
             stderr=-2,
             stdout=-1
+        )
+        mock_objects['send_nsca'].assert_called_with(
+            host_name=b'test1',
+            remote_host=b'1.2.3.4',
+            service_name=b'rsync_test1_tmp1_tmp2',
+            status=0,
+            text_output=b'RSYNC OK | num_files=1 num_created_files=3 num_deleted_files=4 num_files_transferred=5 total_size=6 transferred_size=7 literal_data=8 matched_data=9 list_size=10 list_generation_time=11.0 list_transfer_time=12.0 bytes_sent=13 bytes_received=14'  # noqa: E501
         )
 
     def test_check_ping_raise_exception_fail(self):
@@ -161,7 +175,7 @@ class TestIntegrationMock(unittest.TestCase):
     def test_check_ping_raise_exception_pass(self):
         mock_objects = patch_mulitple(
             ['--raise-exception', '--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock()]
+            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1)]
         )
         self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
         mock_objects['subprocess_run'].assert_any_call(
@@ -185,7 +199,7 @@ class TestIntegrationMock(unittest.TestCase):
     def test_check_ping_no_exception_pass(self):
         mock_objects = patch_mulitple(
             ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock()]
+            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1)]
         )
         self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
         mock_objects['subprocess_run'].assert_any_call(
@@ -195,6 +209,16 @@ class TestIntegrationMock(unittest.TestCase):
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
+
+
+class TestUnitFormatPerfData(unittest.TestCase):
+
+    def test_integer(self):
+        self.assertEqual(format_performance_data({'test': 1}), 'test=1')
+
+    def test_float(self):
+        self.assertEqual(format_performance_data({'test': 1.001}),
+                         'test=1.001')
 
 
 class TestIntegration(unittest.TestCase):
