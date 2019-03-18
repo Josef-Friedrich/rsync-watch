@@ -29,16 +29,16 @@ def parse_args():
         help='The hostname to submit over NSCA to the monitoring.',
     )
 
-    parser.add_argument(
-        '--raise-exception',
-        action='store_true',
-        help='Raise an exception if one check doesn’t pass, else the rsync '
-             'job gets skipped.',
-    )
-
     checks = parser.add_argument_group(
         title='checks',
         description='Perform different checks before running the rsync task.'
+    )
+
+    checks.add_argument(
+        '--action-check-failed',
+        choices=('exception', 'skip'),
+        default='skip',
+        help='Select action what to do when a check failed.',
     )
 
     checks.add_argument(
@@ -300,8 +300,10 @@ class Checks:
 
 def main():
     args = parse_args()
-
-    checks = Checks(raise_exception=args.raise_exception)
+    raise_exception = False
+    if args.action_check_failed == 'exception':
+        raise_exception = True
+    checks = Checks(raise_exception=raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
     if args.check_ping:
