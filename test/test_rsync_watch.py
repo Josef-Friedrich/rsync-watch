@@ -1,6 +1,8 @@
 import unittest
 import subprocess
+import os
 from rsync_watch import \
+    Checks, \
     format_performance_data, \
     parse_stats, \
     RsyncWatchError, \
@@ -183,6 +185,28 @@ class TestIntegrationMock(unittest.TestCase):
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
+    def test_check_file_raise_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--raise-exception', '--check-file', os.getcwd(), 'tmp1', 'tmp2'],
+            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+        )
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
+        mock_objects['subprocess_run'].assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    def test_check_file_raise_exception_fail(self):
+        with self.assertRaises(RsyncWatchError) as exception:
+            patch_mulitple(
+                ['--raise-exception', '--check-file',
+                 '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4', 'tmp1', 'tmp2']
+            )
+        self.assertEqual(
+            str(exception.exception),
+            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
+        )
+
     def test_check_ping_no_exception_fail(self):
         mock_objects = patch_mulitple(
             ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
@@ -225,6 +249,43 @@ class TestUnitFormatPerfData(unittest.TestCase):
     def test_float(self):
         self.assertEqual(format_performance_data({'test': 1.001}),
                          'test=1.001')
+
+
+class TestUnitClassChecks(unittest.TestCase):
+
+    def test_initialisation_raise_exception_true(self):
+        checks = Checks(raise_exception=True)
+        self.assertEqual(checks.raise_exception, True)
+        self.assertEqual(checks.messages, '')
+        self.assertEqual(checks.passed, True)
+
+    def test_initialisation_raise_exception_false(self):
+        checks = Checks(raise_exception=False)
+        self.assertEqual(checks.raise_exception, False)
+
+    def test_method_have_passed_true(self):
+        checks = Checks(raise_exception=False)
+        self.assertEqual(checks.have_passed(), True)
+
+    def test_method_have_passed_false(self):
+        checks = Checks(raise_exception=False)
+        checks._log_fail('test')
+        self.assertEqual(checks.have_passed(), False)
+
+    def test_method_check_file_pass(self):
+        checks = Checks(raise_exception=False)
+        checks.check_file(os.getcwd())
+        self.assertEqual(checks.have_passed(), True)
+        self.assertEqual(checks.messages, '')
+
+    def test_method_check_file_fail(self):
+        checks = Checks(raise_exception=False)
+        checks.check_file('/d2c75c94-78b8-4f09-9fc4-3779d020bbd4')
+        self.assertEqual(checks.have_passed(), False)
+        self.assertEqual(
+            checks.messages,
+            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
+        )
 
 
 class TestIntegration(unittest.TestCase):

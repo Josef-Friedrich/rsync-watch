@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import re
 import socket
+import os
 from rsync_watch.send_nsca import send_nsca
 
 from rsync_watch._version import get_versions
@@ -30,12 +31,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--check-hostname',
-        help='Check if a remote host is reachable over the network by SSHing '
-             'into it and retrieve its hostname.'
-    )
-
-    parser.add_argument(
         '--raise-exception',
         action='store_true',
         help='Raise an exception if one check doesn’t pass, else the rsync '
@@ -43,8 +38,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--check-hostname',
+        help='Check if a remote host is reachable over the network by SSHing '
+             'into it and retrieve its hostname.'
+    )
+
+    parser.add_argument(
         '--check-file',
-        help='Check if a file exists.'
+        help='Check if a file exists on the local machine.'
     )
 
     parser.add_argument(
@@ -245,6 +246,14 @@ class Checks:
         self._messages.append(message)
         self.passed = False
 
+    def check_file(self, file_path):
+        """Check if a file exists.
+
+        :param string file_path: The file to check.
+        """
+        if not os.path.exists(file_path):
+            self._log_fail('The file “{}” doesn’t exist.'.format(file_path))
+
     def check_ping(self, dest):
         process = subprocess.run(['ping', '-c', 3, dest])
         if process.returncode != 0:
@@ -274,7 +283,7 @@ class Checks:
                 process.stdout.strip() == hostname):
             self._log_fail('hostname: “{}” is not reachable.'.format(ssh_host))
 
-    def has_passed(self):
+    def have_passed(self):
         if self.raise_exception and not self.passed:
             raise RsyncWatchError(self.messages)
         return self.passed
@@ -284,11 +293,12 @@ def main():
     args = parse_args()
 
     checks = Checks(raise_exception=args.raise_exception)
-
+    if args.check_file:
+        checks.check_file(args.check_file)
     if args.check_ping:
         checks.check_ping(args.check_ping)
 
-    if checks.has_passed():
+    if checks.have_passed():
         process = subprocess.run(
             ['rsync', '-av', '--stats', args.src, args.dest],
             encoding='utf-8',
