@@ -6,6 +6,10 @@ import re
 import socket
 from send_nsca import send_nsca
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 
 class RsyncWatchError(Exception):
     """Base exception for this script."""

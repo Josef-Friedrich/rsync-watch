@@ -1,6 +1,5 @@
 import unittest
 import subprocess
-import os
 from rsync_watch import \
     format_performance_data, \
     parse_stats, \
@@ -12,9 +11,7 @@ import rsync_watch
 from unittest.mock import patch
 from unittest import mock
 
-SCRIPT = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), '..', 'rsync_watch.py')
-)
+SCRIPT = 'rsync-watch.py'
 
 OUTPUT1 = '''
 sending incremental file list
@@ -243,7 +240,7 @@ class TestIntegration(unittest.TestCase):
         )
         self.assertEqual(process.returncode, 0)
         self.assertIn(
-            'usage: rsync_watch.py',
+            'usage: rsync-watch.py',
             process.stdout
         )
 

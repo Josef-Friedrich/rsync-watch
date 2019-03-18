@@ -1,5 +1,6 @@
 from setuptools import setup
 import os
+import versioneer
 
 
 def read(file_name):
@@ -14,12 +15,15 @@ setup(
     author_email='josef@friedrich.rocks',
     description=('A Python script to monitor the execution of a rsync task.'),
     license='GPL3',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     project_urls={
         'Source': 'https://github.com/Josef-Friedrich/rsync-watch',
         'Tracker': 'https://github.com/Josef-Friedrich/rsync-watch/issues',
     },
     url='https://github.com/Josef-Friedrich/rsync-watch',
     python_requires='>=3.6',
+    packages=['rsync_watch'],
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     classifiers=[
@@ -27,4 +31,9 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
+    entry_points = {
+        'console_scripts': [
+            'rsync-watch.py = rsync_watch:main',
+        ],
+    },
 )
