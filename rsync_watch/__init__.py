@@ -9,7 +9,6 @@ from rsync_watch.send_nsca import send_nsca
 
 from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
-del get_versions
 
 
 class RsyncWatchError(Exception):
@@ -61,6 +60,13 @@ def parse_args():
     parser.add_argument(
         '--nsca-remote-host',
         help='IP address of the NSCA remote host.'
+    )
+
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version='%(prog)s {version}'.format(version=get_versions()['version'])
     )
 
     parser.add_argument(

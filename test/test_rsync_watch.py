@@ -314,6 +314,18 @@ class TestIntegration(unittest.TestCase):
             process.stdout
         )
 
+    def test_version(self):
+        process = subprocess.run(
+            [SCRIPT, '--version'],
+            encoding='utf-8',
+            stdout=subprocess.PIPE
+        )
+        self.assertEqual(process.returncode, 0)
+        self.assertIn(
+            'rsync-watch.py ',
+            process.stdout
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
