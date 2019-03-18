@@ -42,19 +42,25 @@ def parse_args():
     )
 
     checks.add_argument(
-        '--check-hostname',
-        help='Check if a remote host is reachable over the network by SSHing '
-             'into it and retrieve its hostname.'
-    )
-
-    checks.add_argument(
         '--check-file',
+        metavar='FILE_PATH',
         help='Check if a file exists on the local machine.'
     )
 
     checks.add_argument(
+        '--check-host-name',
+        nargs=2,
+        metavar=('SSH_LOGIN', 'EXPECTED_HOST_NAME'),
+        help='Check if a remote host is reachable over the network by SSHing '
+             'into it and retrieve its hostname. SSH_LOGIN: root@192.168.1.1 '
+             'or root@example.com or example.com'
+    )
+
+    checks.add_argument(
         '--check-ping',
-        help='Check if a remote host is reachable by pinging.'
+        metavar='DESTINATION',
+        help='Check if a remote host is reachable by pinging. DESTINATION can '
+             'a IP address or a host name or a full qualified host name.'
     )
 
     parser.add_argument(
@@ -265,7 +271,7 @@ class Checks:
         if process.returncode != 0:
             self._log_fail('ping: “{}” is not reachable.'.format(dest))
 
-    def check_hostname(self, ssh_host, hostname=''):
+    def check_host_name(self, ssh_host, host_name):
         """Check if the given host is online by retrieving its hostname.
 
         :param string ssh_host: A ssh host string in the form of:
@@ -277,8 +283,6 @@ class Checks:
         :return: True or False
         :rtype: boolean
         """
-        if not hostname:
-            hostname = ssh_host
         process = subprocess.run(
             ['ssh', ssh_host, 'hostname'],
             encoding='utf-8',
@@ -286,7 +290,7 @@ class Checks:
             stdout=subprocess.PIPE,
         )
         if not (process.returncode == 0 and
-                process.stdout.strip() == hostname):
+                process.stdout.strip() == host_name):
             self._log_fail('hostname: “{}” is not reachable.'.format(ssh_host))
 
     def have_passed(self):
@@ -301,6 +305,11 @@ def main():
     checks = Checks(raise_exception=args.raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
+    if args.check_host_name:
+        checks.check_host_name(
+            ssh_host=args.check_host_name[0],
+            host_name=args.check_host_name[1]
+        )
     if args.check_ping:
         checks.check_ping(args.check_ping)
 

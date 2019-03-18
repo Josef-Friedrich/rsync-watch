@@ -59,7 +59,7 @@ total size is 4,222,882,233  speedup is 309.34
 def patch_mulitple(args, mocks=[]):
     with patch('sys.argv',  ['cmd'] + list(args)), \
          patch('rsync_watch.send_nsca') as send_nsca, \
-         patch('subprocess.run') as subprocess_run:
+         patch('rsync_watch.subprocess.run') as subprocess_run:
 
         if mocks:
             subprocess_run.side_effect = mocks
@@ -161,6 +161,51 @@ class TestIntegrationMock(unittest.TestCase):
             text_output=b'RSYNC OK | num_files=1 num_created_files=3 num_deleted_files=4 num_files_transferred=5 total_size=6 transferred_size=7 literal_data=8 matched_data=9 list_size=10 list_generation_time=11.0 list_transfer_time=12.0 bytes_sent=13 bytes_received=14'  # noqa: E501
         )
 
+    # --check-file
+    def test_check_file_raise_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--raise-exception', '--check-file', os.getcwd(), 'tmp1', 'tmp2'],
+            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+        )
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
+        mock_objects['subprocess_run'].assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    def test_check_file_raise_exception_fail(self):
+        with self.assertRaises(RsyncWatchError) as exception:
+            patch_mulitple(
+                ['--raise-exception', '--check-file',
+                 '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4', 'tmp1', 'tmp2']
+            )
+        self.assertEqual(
+            str(exception.exception),
+            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
+        )
+
+    # --check-host-name
+    def test_check_host_name_raise_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--raise-exception', '--check-host-name', 'test@example.com',
+             'test', 'tmp1', 'tmp2'],
+            [
+                mock.Mock(stdout='test', returncode=0),
+                mock.Mock(stdout=OUTPUT1, returncode=0)
+            ]
+        )
+        subprocess_run = mock_objects['subprocess_run']
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
+        subprocess_run.assert_any_call(
+            ['ssh', 'test@example.com', 'hostname'],
+            encoding='utf-8', stderr=-3, stdout=-1
+        )
+        subprocess_run.assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    # --check-ping
     def test_check_ping_raise_exception_fail(self):
         with self.assertRaises(RsyncWatchError) as exception:
             patch_mulitple(
@@ -183,28 +228,6 @@ class TestIntegrationMock(unittest.TestCase):
         mock_objects['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
-        )
-
-    def test_check_file_raise_exception_pass(self):
-        mock_objects = patch_mulitple(
-            ['--raise-exception', '--check-file', os.getcwd(), 'tmp1', 'tmp2'],
-            [mock.Mock(stdout=OUTPUT1, returncode=0)]
-        )
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
-        mock_objects['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
-        )
-
-    def test_check_file_raise_exception_fail(self):
-        with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(
-                ['--raise-exception', '--check-file',
-                 '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4', 'tmp1', 'tmp2']
-            )
-        self.assertEqual(
-            str(exception.exception),
-            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
         )
 
     def test_check_ping_no_exception_fail(self):
