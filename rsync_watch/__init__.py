@@ -263,12 +263,18 @@ class Checks:
         :param string file_path: The file to check.
         """
         if not os.path.exists(file_path):
-            self._log_fail('The file “{}” doesn’t exist.'.format(file_path))
+            self._log_fail(
+                '--check-file: The file “{}” doesn’t exist.'.format(file_path)
+            )
 
     def check_ping(self, dest):
+        """Check if a remote host is reachable by pinging to it.
+
+        :param string dest: A destination to ping to.
+        """
         process = subprocess.run(['ping', '-c', 3, dest])
         if process.returncode != 0:
-            self._log_fail('ping: “{}” is not reachable.'.format(dest))
+            self._log_fail('--check-ping: “{}” is not reachable.'.format(dest))
 
     def check_ssh_login(self, ssh_host):
         """Check if the given host is online by retrieving its hostname.

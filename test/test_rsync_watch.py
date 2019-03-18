@@ -181,7 +181,8 @@ class TestIntegrationMock(unittest.TestCase):
             )
         self.assertEqual(
             str(exception.exception),
-            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
+            '--check-file: The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” '
+            'doesn’t exist.'
         )
 
     # --check-ping
@@ -193,7 +194,7 @@ class TestIntegrationMock(unittest.TestCase):
                 [mock.Mock(returncode=1), mock.Mock()]
             )
         self.assertEqual(str(exception.exception),
-                         'ping: “8.8.8.8” is not reachable.')
+                         '--check-ping: “8.8.8.8” is not reachable.')
 
     def test_check_ping_raise_exception_pass(self):
         mock_objects = patch_mulitple(
@@ -319,7 +320,8 @@ class TestUnitClassChecks(unittest.TestCase):
         self.assertEqual(checks.have_passed(), False)
         self.assertEqual(
             checks.messages,
-            'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
+            '--check-file: The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” '
+            'doesn’t exist.'
         )
 
 
