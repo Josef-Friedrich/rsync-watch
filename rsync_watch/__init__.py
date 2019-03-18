@@ -36,23 +36,23 @@ def parse_args():
              'job gets skipped.',
     )
 
-    parser.add_argument(
+    checks = parser.add_argument_group(
+        title='checks',
+        description='Perform different checks before running the rsync task.'
+    )
+
+    checks.add_argument(
         '--check-hostname',
         help='Check if a remote host is reachable over the network by SSHing '
              'into it and retrieve its hostname.'
     )
 
-    parser.add_argument(
+    checks.add_argument(
         '--check-file',
         help='Check if a file exists on the local machine.'
     )
 
-    parser.add_argument(
-        '--check-mount',
-        help='Check if a mount point exists.'
-    )
-
-    parser.add_argument(
+    checks.add_argument(
         '--check-ping',
         help='Check if a remote host is reachable by pinging.'
     )

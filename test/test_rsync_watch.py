@@ -313,6 +313,10 @@ class TestIntegration(unittest.TestCase):
             'usage: rsync-watch.py',
             process.stdout
         )
+        self.assertIn(
+            'Perform different checks before running the rsync task.',
+            process.stdout
+        )
 
     def test_version(self):
         process = subprocess.run(
