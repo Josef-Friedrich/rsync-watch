@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import versioneer
 
@@ -23,7 +23,7 @@ setup(
     },
     url='https://github.com/Josef-Friedrich/rsync-watch',
     python_requires='>=3.6',
-    packages=['rsync_watch'],
+    packages=find_packages(),
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     classifiers=[
@@ -31,6 +31,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
+    install_requires = ['pycrypto>=2.0', 'six'],
     entry_points = {
         'console_scripts': [
             'rsync-watch.py = rsync_watch:main',
