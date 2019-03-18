@@ -272,7 +272,9 @@ class Checks:
 
         :param string dest: A destination to ping to.
         """
-        process = subprocess.run(['ping', '-c', 3, dest])
+        process = subprocess.run(['ping', '-c', 3, dest],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
         if process.returncode != 0:
             self._log_fail('--check-ping: “{}” is not reachable.'.format(dest))
 
@@ -286,7 +288,9 @@ class Checks:
         :return: True or False
         :rtype: boolean
         """
-        process = subprocess.run(['ssh', ssh_host, 'ls'])
+        process = subprocess.run(['ssh', ssh_host, 'ls'],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
         if not process.returncode == 0:
             self._log_fail(
                 '--check-ssh-login: “{}” is not reachable.'.format(ssh_host)
