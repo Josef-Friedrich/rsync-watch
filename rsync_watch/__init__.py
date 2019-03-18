@@ -313,7 +313,7 @@ def main():
 
     if checks.have_passed():
         process = subprocess.run(
-            ['rsync', '-av', '--stats', args.src, args.dest],
+            ['rsync', '-av', '--delete', '--stats', args.src, args.dest],
             encoding='utf-8',
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

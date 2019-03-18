@@ -148,7 +148,7 @@ class TestIntegrationMock(unittest.TestCase):
             [mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
         mock_objects['subprocess_run'].assert_called_with(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8',
             stderr=-2,
             stdout=-1
@@ -170,7 +170,7 @@ class TestIntegrationMock(unittest.TestCase):
         )
         self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
         mock_objects['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
@@ -209,7 +209,7 @@ class TestIntegrationMock(unittest.TestCase):
             ['ping', '-c', 3, '8.8.8.8']
         )
         mock_objects['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
@@ -233,7 +233,7 @@ class TestIntegrationMock(unittest.TestCase):
             ['ping', '-c', 3, '8.8.8.8']
         )
         mock_objects['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
@@ -251,7 +251,7 @@ class TestIntegrationMock(unittest.TestCase):
         self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
         subprocess_run.assert_any_call(['ssh', 'test@example.com', 'ls'])
         subprocess_run.assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
