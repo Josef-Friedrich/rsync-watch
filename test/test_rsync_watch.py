@@ -143,7 +143,7 @@ class TestIntegrationMock(unittest.TestCase):
         mock_objects = patch_mulitple(
             ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
              'tmp2'],
-            [mock.Mock(stdout=OUTPUT1)]
+            [mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
         mock_objects['subprocess_run'].assert_called_with(
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
@@ -172,7 +172,7 @@ class TestIntegrationMock(unittest.TestCase):
     def test_check_ping_raise_exception_pass(self):
         mock_objects = patch_mulitple(
             ['--raise-exception', '--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1)]
+            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
         self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
         mock_objects['subprocess_run'].assert_any_call(
@@ -196,7 +196,7 @@ class TestIntegrationMock(unittest.TestCase):
     def test_check_ping_no_exception_pass(self):
         mock_objects = patch_mulitple(
             ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1)]
+            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
         self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
         mock_objects['subprocess_run'].assert_any_call(
@@ -206,6 +206,15 @@ class TestIntegrationMock(unittest.TestCase):
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
+
+    def test_rsync_exception(self):
+        with self.assertRaises(RsyncWatchError) as exception:
+            patch_mulitple(
+                ['tmp1', 'tmp2'],
+                [mock.Mock(stdout=OUTPUT1, returncode=1)]
+            )
+        self.assertEqual(str(exception.exception),
+                         'The rsync task fails with a non-zero exit code.')
 
 
 class TestUnitFormatPerfData(unittest.TestCase):

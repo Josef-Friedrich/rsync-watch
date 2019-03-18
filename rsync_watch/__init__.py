@@ -296,6 +296,10 @@ def main():
             stderr=subprocess.STDOUT,
         )
         print(process.stdout)
+        if process.returncode != 0:
+            raise RsyncWatchError(
+                'The rsync task fails with a non-zero exit code.'
+            )
         if args.nsca_remote_host:
             if not args.host_name:
                 host_name = socket.gethostname()
