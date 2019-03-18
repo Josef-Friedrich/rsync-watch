@@ -48,19 +48,18 @@ def parse_args():
     )
 
     checks.add_argument(
-        '--check-host-name',
-        nargs=2,
-        metavar=('SSH_LOGIN', 'EXPECTED_HOST_NAME'),
-        help='Check if a remote host is reachable over the network by SSHing '
-             'into it and retrieve its hostname. SSH_LOGIN: root@192.168.1.1 '
-             'or root@example.com or example.com'
-    )
-
-    checks.add_argument(
         '--check-ping',
         metavar='DESTINATION',
         help='Check if a remote host is reachable by pinging. DESTINATION can '
              'a IP address or a host name or a full qualified host name.'
+    )
+
+    checks.add_argument(
+        '--check-ssh-login',
+        metavar='SSH_LOGIN',
+        help='Check if a remote host is reachable over the network by SSHing '
+             'into it. SSH_LOGIN: “root@192.168.1.1” '
+             'or “root@example.com” or “example.com”.'
     )
 
     parser.add_argument(
@@ -271,27 +270,21 @@ class Checks:
         if process.returncode != 0:
             self._log_fail('ping: “{}” is not reachable.'.format(dest))
 
-    def check_host_name(self, ssh_host, host_name):
+    def check_ssh_login(self, ssh_host):
         """Check if the given host is online by retrieving its hostname.
 
         :param string ssh_host: A ssh host string in the form of:
           `user@hostname` or `hostname` or `alias` (as specified in
           `~/.ssh/config`)
-        :param string hostname: The hostname to check from the UNIX command
-          `hostname`.
 
         :return: True or False
         :rtype: boolean
         """
-        process = subprocess.run(
-            ['ssh', ssh_host, 'hostname'],
-            encoding='utf-8',
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-        )
-        if not (process.returncode == 0 and
-                process.stdout.strip() == host_name):
-            self._log_fail('hostname: “{}” is not reachable.'.format(ssh_host))
+        process = subprocess.run(['ssh', ssh_host, 'ls'])
+        if not process.returncode == 0:
+            self._log_fail(
+                '--check-ssh-login: “{}” is not reachable.'.format(ssh_host)
+            )
 
     def have_passed(self):
         if self.raise_exception and not self.passed:
@@ -305,13 +298,10 @@ def main():
     checks = Checks(raise_exception=args.raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
-    if args.check_host_name:
-        checks.check_host_name(
-            ssh_host=args.check_host_name[0],
-            host_name=args.check_host_name[1]
-        )
     if args.check_ping:
         checks.check_ping(args.check_ping)
+    if args.check_ssh_login:
+        checks.check_ssh_login(args.check_ssh_login)
 
     if checks.have_passed():
         process = subprocess.run(

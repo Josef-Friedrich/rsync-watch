@@ -184,27 +184,6 @@ class TestIntegrationMock(unittest.TestCase):
             'The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” doesn’t exist.'
         )
 
-    # --check-host-name
-    def test_check_host_name_raise_exception_pass(self):
-        mock_objects = patch_mulitple(
-            ['--raise-exception', '--check-host-name', 'test@example.com',
-             'test', 'tmp1', 'tmp2'],
-            [
-                mock.Mock(stdout='test', returncode=0),
-                mock.Mock(stdout=OUTPUT1, returncode=0)
-            ]
-        )
-        subprocess_run = mock_objects['subprocess_run']
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
-        subprocess_run.assert_any_call(
-            ['ssh', 'test@example.com', 'hostname'],
-            encoding='utf-8', stderr=-3, stdout=-1
-        )
-        subprocess_run.assert_any_call(
-            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
-        )
-
     # --check-ping
     def test_check_ping_raise_exception_fail(self):
         with self.assertRaises(RsyncWatchError) as exception:
@@ -252,6 +231,39 @@ class TestIntegrationMock(unittest.TestCase):
         mock_objects['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    # --check-ssh-login
+    def test_check_ssh_login_raise_exception_pass(self):
+        mock_objects = patch_mulitple(
+            ['--raise-exception', '--check-ssh-login', 'test@example.com',
+             'tmp1', 'tmp2'],
+            [
+                mock.Mock(returncode=0),
+                mock.Mock(stdout=OUTPUT1, returncode=0)
+            ]
+        )
+        subprocess_run = mock_objects['subprocess_run']
+        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
+        subprocess_run.assert_any_call(['ssh', 'test@example.com', 'ls'])
+        subprocess_run.assert_any_call(
+            ['rsync', '-av', '--stats', 'tmp1', 'tmp2'],
+            encoding='utf-8', stderr=-2, stdout=-1
+        )
+
+    def test_check_ssh_login_raise_exception_fail(self):
+        with self.assertRaises(RsyncWatchError) as exception:
+            patch_mulitple(
+                ['--raise-exception', '--check-ssh-login', 'test@example.com',
+                 'tmp1', 'tmp2'],
+                [
+                    mock.Mock(returncode=255),
+                    mock.Mock(stdout=OUTPUT1, returncode=0)
+                ]
+            )
+        self.assertEqual(
+            str(exception.exception),
+            '--check-ssh-login: “test@example.com” is not reachable.'
         )
 
     def test_rsync_exception(self):
