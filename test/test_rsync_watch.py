@@ -59,30 +59,37 @@ total size is 4,222,882,233  speedup is 309.34
 
 
 class Capturing(list):
-    def __init__(self, channel='out'):
+    """
+    https://stackoverflow.com/a/16571630
+
+    :param string channel: `stdout` or `stderr`
+    """
+    def __init__(self, channel='stdout'):
         self.channel = channel
 
     def __enter__(self):
-        if self.channel == 'out':
+        if self.channel == 'stdout':
             self._pipe = sys.stdout
             sys.stdout = self._stringio = StringIO()
-        elif self.channel == 'err':
+        elif self.channel == 'stderr':
             self._pipe = sys.stderr
             sys.stderr = self._stringio = StringIO()
         return self
 
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
-        if self.channel == 'out':
+        if self.channel == 'stdout':
             sys.stdout = self._pipe
-        elif self.channel == 'err':
+        elif self.channel == 'stderr':
             sys.stderr = self._pipe
 
 
 def patch_mulitple(args, mocks=[]):
     with patch('sys.argv',  ['cmd'] + list(args)), \
          patch('rsync_watch.send_nsca') as send_nsca, \
-         patch('rsync_watch.subprocess.run') as subprocess_run:
+         patch('rsync_watch.subprocess.run') as subprocess_run, \
+         Capturing(channel='stdout') as stdout, \
+         Capturing(channel='stderr') as stderr:
 
         if mocks:
             subprocess_run.side_effect = mocks
@@ -90,6 +97,8 @@ def patch_mulitple(args, mocks=[]):
     return {
         'subprocess_run': subprocess_run,
         'send_nsca': send_nsca,
+        'stdout': stdout,
+        'stderr': stderr,
     }
 
 
@@ -165,34 +174,48 @@ class TestUnitServiceName(unittest.TestCase):
 class TestIntegrationMock(unittest.TestCase):
 
     def test_minimal(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
              'tmp2'],
             [mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
-        mock_objects['subprocess_run'].assert_called_with(
+        result['subprocess_run'].assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8',
             stderr=-2,
             stdout=-1
         )
-        mock_objects['send_nsca'].assert_called_with(
+        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
+                      'num_deleted_files=4 num_files_transferred=5 ' \
+                      'total_size=6 transferred_size=7 literal_data=8 ' \
+                      'matched_data=9 list_size=10 ' \
+                      'list_generation_time=11.0 ' \
+                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
+
+        result['send_nsca'].assert_called_with(
             host_name=b'test1',
             remote_host=b'1.2.3.4',
             service_name=b'rsync_test1_tmp1_tmp2',
             status=0,
-            text_output=b'RSYNC OK | num_files=1 num_created_files=3 num_deleted_files=4 num_files_transferred=5 total_size=6 transferred_size=7 literal_data=8 matched_data=9 list_size=10 list_generation_time=11.0 list_transfer_time=12.0 bytes_sent=13 bytes_received=14'  # noqa: E501
+            text_output=nsca_output.encode()
+
         )
+        stdout = '\n'.join(result['stdout'])
+        self.assertIn('Source: tmp1', stdout)
+        self.assertIn('Destination: tmp2', stdout)
+        self.assertIn('Rsync command: rsync -av --delete --stats tmp1 tmp2',
+                      stdout)
+        self.assertIn('Monitoring output: {}'.format(nsca_output), stdout)
 
     # --check-file
     def test_check_file_action_check_failed_pass(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--action-check-failed', 'exception', '--check-file', os.getcwd(),
              'tmp1', 'tmp2'],
             [mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
-        mock_objects['subprocess_run'].assert_any_call(
+        self.assertEqual(result['subprocess_run'].call_count, 1)
+        result['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
@@ -222,47 +245,47 @@ class TestIntegrationMock(unittest.TestCase):
                          '--check-ping: “8.8.8.8” is not reachable.')
 
     def test_check_ping_action_check_failed_pass(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--action-check-failed', 'exception', '--check-ping', '8.8.8.8',
              'tmp1', 'tmp2'],
             [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
-        mock_objects['subprocess_run'].assert_any_call(
+        self.assertEqual(result['subprocess_run'].call_count, 2)
+        result['subprocess_run'].assert_any_call(
             ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
         )
-        mock_objects['subprocess_run'].assert_any_call(
+        result['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
     def test_check_ping_no_exception_fail(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
             [mock.Mock(returncode=1), mock.Mock()]
         )
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 1)
-        mock_objects['subprocess_run'].assert_called_with(
+        self.assertEqual(result['subprocess_run'].call_count, 1)
+        result['subprocess_run'].assert_called_with(
             ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
         )
 
     def test_check_ping_no_exception_pass(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
             [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
-        mock_objects['subprocess_run'].assert_any_call(
+        self.assertEqual(result['subprocess_run'].call_count, 2)
+        result['subprocess_run'].assert_any_call(
             ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
         )
-        mock_objects['subprocess_run'].assert_any_call(
+        result['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
             encoding='utf-8', stderr=-2, stdout=-1
         )
 
     # --check-ssh-login
     def test_check_ssh_login_action_check_failed_pass(self):
-        mock_objects = patch_mulitple(
+        result = patch_mulitple(
             ['--action-check-failed', 'exception', '--check-ssh-login',
              'test@example.com', 'tmp1', 'tmp2'],
             [
@@ -270,8 +293,8 @@ class TestIntegrationMock(unittest.TestCase):
                 mock.Mock(stdout=OUTPUT1, returncode=0)
             ]
         )
-        subprocess_run = mock_objects['subprocess_run']
-        self.assertEqual(mock_objects['subprocess_run'].call_count, 2)
+        subprocess_run = result['subprocess_run']
+        self.assertEqual(result['subprocess_run'].call_count, 2)
         subprocess_run.assert_any_call(['ssh', 'test@example.com', 'ls'],
                                        stderr=-3, stdout=-3)
         subprocess_run.assert_any_call(
