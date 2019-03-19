@@ -5,7 +5,7 @@ import subprocess
 import re
 import socket
 import os
-from rsync_watch.send_nsca import send_nsca
+from rsync_watch.nsca import send_nsca
 
 from rsync_watch._version import get_versions
 __version__ = get_versions()['version']

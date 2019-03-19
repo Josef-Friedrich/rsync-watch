@@ -1,5 +1,8 @@
 #!/usr/bin/python
 #
+# https://raw.githubusercontent.com/Yelp/send_nsca/master/send_nsca/nsca.py
+# 9ea56a9ea7297800a678284e47ee6a6d85064a6e
+#
 # send_nsca.py: A replacement for the C-based send_nsca, able
 # to be run in pure-python. Depends on PyCrypto and Python >= 2.6.
 #
@@ -40,8 +43,6 @@ import Crypto.Cipher.CAST
 import Crypto.Util.randpool
 import six
 
-from . import nagios
-
 MAX_PASSWORD_LENGTH = 512
 MAX_HOSTNAME_LENGTH = 64
 MAX_DESCRIPTION_LENGTH = 128
@@ -52,6 +53,21 @@ _TRANSMITTED_IV_SIZE = 128
 PACKET_VERSION = 3
 
 DEFAULT_PORT = 5667
+
+# https://raw.githubusercontent.com/Yelp/send_nsca/master/send_nsca/nagios.py
+
+STATE_OK = 0
+STATE_WARNING = 1
+STATE_CRITICAL = 2
+STATE_UNKNOWN = 3
+
+States = {
+    STATE_OK: 'OK',
+    STATE_WARNING: 'WARNING',
+    STATE_CRITICAL: 'CRITICAL',
+    STATE_UNKNOWN: 'UNKNOWN',
+}
+
 
 log = logging.getLogger("send_nsca")
 
@@ -329,8 +345,8 @@ class NscaSender(object):
                 raise ConfigParseError(config_path, line_no, "Could not parse value '%s' for key '%s'" % (value, key))
 
     def _check_alert(self, host=None, service=None, state=None, description=None):
-        if state not in nagios.States.keys():
-            raise ValueError("state %r should be one of {%s}" % (state, ','.join(map(str, nagios.States.keys()))))
+        if state not in States.keys():
+            raise ValueError("state %r should be one of {%s}" % (state, ','.join(map(str, States.keys()))))
         if not isinstance(host, bytes):
             raise ValueError("host %r must be a non-unicode string" % (host))
         if len(host) > MAX_HOSTNAME_LENGTH:
@@ -406,3 +422,30 @@ class NscaSender(object):
 
     def __del__(self):
         self.disconnect()
+
+
+def send_nsca(status, host_name, service_name, text_output, remote_host,
+              password=None, encryption_method=None, **kwargs):
+    """Helper function to easily send a NSCA message (wraps .nsca.NscaSender)
+
+    Arguments:
+        status: Integer describing the status
+        host_name: Host name to report as
+        service_name: Service to report as
+        text_output: Freeform text, should be under 512b
+        remote_host: Host name to send to
+
+        All other arguments are passed to the NscaSender constructor
+    """
+    try:
+        if password and encryption_method:
+            n = NscaSender(remote_host=remote_host, config_path=None, **kwargs)
+            n.password = password
+            n.encryption_method_i = int(encryption_method)
+            n.Crypter = crypters[n.encryption_method_i]
+        else:
+            n = NscaSender(remote_host=remote_host, **kwargs)
+        n.send_service(host_name, service_name, status, text_output)
+        n.disconnect()
+    except Exception as e:
+        log.error("Unable to send NSCA packet to %s for %s:%s (%s)", remote_host, host_name, service_name, str(e))
