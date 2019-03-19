@@ -197,8 +197,9 @@ class TestIntegrationMock(unittest.TestCase):
             remote_host=b'1.2.3.4',
             service_name=b'rsync_test1_tmp1_tmp2',
             status=0,
-            text_output=nsca_output.encode()
-
+            text_output=nsca_output.encode(),
+            password=None,
+            encryption_method=None
         )
         stdout = '\n'.join(result['stdout'])
         self.assertIn('Source: tmp1', stdout)
@@ -206,6 +207,34 @@ class TestIntegrationMock(unittest.TestCase):
         self.assertIn('Rsync command: rsync -av --delete --stats tmp1 tmp2',
                       stdout)
         self.assertIn('Monitoring output: {}'.format(nsca_output), stdout)
+
+    # --nsca-remote-host
+    # --nsca-password
+    # --nsca-encryption-method
+    def test_nsca(self):
+        result = patch_mulitple(
+            ['--nsca-remote-host', '1.2.3.4', '--nsca-password', '1234',
+             '--nsca-encryption-method', '8',  '--host-name', 'test1', 'tmp1',
+             'tmp2'],
+            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+        )
+        self.assertEqual(result['subprocess_run'].call_count, 1)
+        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
+                      'num_deleted_files=4 num_files_transferred=5 ' \
+                      'total_size=6 transferred_size=7 literal_data=8 ' \
+                      'matched_data=9 list_size=10 ' \
+                      'list_generation_time=11.0 ' \
+                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
+
+        result['send_nsca'].assert_called_with(
+            host_name=b'test1',
+            remote_host=b'1.2.3.4',
+            service_name=b'rsync_test1_tmp1_tmp2',
+            status=0,
+            text_output=nsca_output.encode(),
+            password=b'1234',
+            encryption_method=8
+        )
 
     # --check-file
     def test_check_file_action_check_failed_pass(self):

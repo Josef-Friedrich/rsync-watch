@@ -361,12 +361,25 @@ def main():
             )
 
             print('Monitoring output: {}'.format(text_output))
+
+            if args.nsca_encryption_method:
+                encryption_method = int(args.nsca_encryption_method)
+            else:
+                encryption_method = None
+
+            if args.nsca_password:
+                password = args.nsca_password.encode()
+            else:
+                password = None
+
             send_nsca(
                 status=0,
                 host_name=host_name.encode(),
                 service_name=service.encode(),
                 text_output=text_output.encode(),
-                remote_host=args.nsca_remote_host.encode()
+                remote_host=args.nsca_remote_host.encode(),
+                password=password,
+                encryption_method=encryption_method
             )
     else:
         print(checks.messages)
