@@ -1,6 +1,8 @@
 import unittest
 import subprocess
 import os
+from io import StringIO
+import sys
 from rsync_watch import \
     Checks, \
     format_performance_data, \
@@ -54,6 +56,27 @@ Total bytes received: 19,859
 sent 13,631,370 bytes  received 19,859 bytes  700,063.03 bytes/sec
 total size is 4,222,882,233  speedup is 309.34
 '''
+
+
+class Capturing(list):
+    def __init__(self, channel='out'):
+        self.channel = channel
+
+    def __enter__(self):
+        if self.channel == 'out':
+            self._pipe = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+        elif self.channel == 'err':
+            self._pipe = sys.stderr
+            sys.stderr = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        if self.channel == 'out':
+            sys.stdout = self._pipe
+        elif self.channel == 'err':
+            sys.stderr = self._pipe
 
 
 def patch_mulitple(args, mocks=[]):

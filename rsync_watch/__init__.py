@@ -316,17 +316,23 @@ def main():
         checks.check_ssh_login(args.check_ssh_login)
 
     if checks.have_passed():
-        process = subprocess.run(
-            ['rsync', '-av', '--delete', '--stats', args.src, args.dest],
-            encoding='utf-8',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        rsync_command = ['rsync', '-av', '--delete', '--stats', args.src,
+                         args.dest]
+        print('Source: {}'.format(args.src))
+        print('Destination: {}'.format(args.dest))
+        print('Rsync command: {}'.format(' '.join(rsync_command)))
+
+        process = subprocess.run(rsync_command, encoding='utf-8',
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+
+        print('Rsync output:')
         print(process.stdout)
         if process.returncode != 0:
             raise RsyncWatchError(
                 'The rsync task fails with a non-zero exit code.'
             )
+
         if args.nsca_remote_host:
             if not args.host_name:
                 host_name = socket.gethostname()
@@ -339,6 +345,7 @@ def main():
                 format_performance_data(stats)
             )
 
+            print('Monitoring output: {}'.format(text_output))
             send_nsca(
                 status=0,
                 host_name=host_name.encode(),
