@@ -62,9 +62,24 @@ def parse_args():
              'or “root@example.com” or “example.com”.'
     )
 
-    parser.add_argument(
+    nsca = parser.add_argument_group(
+        title='nsca',
+        description='Send status messages to the monitoring.'
+    )
+
+    nsca.add_argument(
         '--nsca-remote-host',
         help='IP address of the NSCA remote host.'
+    )
+
+    nsca.add_argument(
+        '--nsca-password',
+        help='The NSCA password.'
+    )
+
+    nsca.add_argument(
+        '--nsca-encryption-method',
+        help='The NSCA encryption method.'
     )
 
     parser.add_argument(
