@@ -247,7 +247,7 @@ def service_name(host_name, src, dest):
     :rtype: string
     """
     result = 'rsync_{}_{}_{}'.format(host_name, src, dest)
-    result = re.sub(r'[/@:\.]', '-', result)
+    result = re.sub(r'[/@:\.~]', '-', result)
     result = re.sub(r'-*_-*', '_', result)
     result = re.sub(r'-{2,}', '-', result)
     result = re.sub(r'_{2,}', '_', result)

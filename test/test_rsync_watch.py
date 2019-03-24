@@ -155,6 +155,10 @@ class TestUnitServiceName(unittest.TestCase):
     def test_dash_underscore(self):
         self.assertEqual(service_name('-_-', '', ''), 'rsync_')
 
+    def test_tilde(self):
+        self.assertEqual(service_name('l~o~l', 'tmp1', 'tmp2'),
+                         'rsync_l-o-l_tmp1_tmp2')
+
     def test_multiple_dashs_underscore(self):
         self.assertEqual(service_name('---_---', '', ''), 'rsync_')
 
