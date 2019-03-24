@@ -299,7 +299,7 @@ class Checks:
 
         :param string dest: A destination to ping to.
         """
-        process = subprocess.run(['ping', '-c', 3, dest],
+        process = subprocess.run(['ping', '-c', '3', dest],
                                  stdout=subprocess.DEVNULL,
                                  stderr=subprocess.DEVNULL)
         if process.returncode != 0:

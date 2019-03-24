@@ -324,7 +324,7 @@ class TestIntegrationMock(unittest.TestCase):
         )
         self.assertEqual(result['subprocess_run'].call_count, 2)
         result['subprocess_run'].assert_any_call(
-            ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
+            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
         )
         result['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
@@ -338,7 +338,7 @@ class TestIntegrationMock(unittest.TestCase):
         )
         self.assertEqual(result['subprocess_run'].call_count, 1)
         result['subprocess_run'].assert_called_with(
-            ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
+            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
         )
 
     def test_check_ping_no_exception_pass(self):
@@ -348,7 +348,7 @@ class TestIntegrationMock(unittest.TestCase):
         )
         self.assertEqual(result['subprocess_run'].call_count, 2)
         result['subprocess_run'].assert_any_call(
-            ['ping', '-c', 3, '8.8.8.8'], stderr=-3, stdout=-3
+            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
         )
         result['subprocess_run'].assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
