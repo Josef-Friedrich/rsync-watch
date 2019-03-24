@@ -57,6 +57,27 @@ sent 13,631,370 bytes  received 19,859 bytes  700,063.03 bytes/sec
 total size is 4,222,882,233  speedup is 309.34
 '''
 
+OUTPUT_WITHOUT_DELETED = '''
+receiving incremental file list
+last_pop3
+
+Number of files: 40 (reg: 16, dir: 24)
+Number of created files: 0
+Number of regular files transferred: 1
+Total file size: 22,083 bytes
+Total transferred file size: 14 bytes
+Literal data: 0 bytes
+Matched data: 14 bytes
+File list size: 1,096
+File list generation time: 0.001 seconds
+File list transfer time: 0.000 seconds
+Total bytes sent: 59
+Total bytes received: 1,170
+
+sent 59 bytes  received 1,170 bytes  819.33 bytes/sec
+total size is 22,083  speedup is 17.97
+'''
+
 
 class Capturing(list):
     """
@@ -144,6 +165,24 @@ class TestUnitParseStats(unittest.TestCase):
             'list_transfer_time': 0.000,
             'bytes_sent': 13631370,
             'bytes_received': 19859,
+        })
+
+    def test_output_without_deleted(self):
+        result = parse_stats(OUTPUT_WITHOUT_DELETED)
+        self.assertEqual(result, {
+            'num_files': 40,
+            'num_created_files': 0,
+            'num_deleted_files': 0,
+            'num_files_transferred': 1,
+            'total_size': 22083,
+            'transferred_size': 14,
+            'literal_data': 0,
+            'matched_data': 14,
+            'list_size': 1096,
+            'list_generation_time': 0.001,
+            'list_transfer_time': 0.000,
+            'bytes_sent': 59,
+            'bytes_received': 1170,
         })
 
 

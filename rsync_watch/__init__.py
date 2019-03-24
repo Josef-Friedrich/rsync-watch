@@ -154,13 +154,13 @@ def parse_stats(stdout):
         )
 
     # num_deleted_files
+    # This line is sometimes missing on rsync --version 3.1.2
+    # raise no error
     match = re.search(r'\nNumber of deleted files: ([\d,]*)', stdout)
     if match:
         result['num_deleted_files'] = comma_int_to_int(match[1])
     else:
-        raise StatsNotFoundError(
-            'Number of deleted files: X,XXX (reg: X,XXX, dir: X,XXX)'
-        )
+        result['num_deleted_files'] = 0
 
     # num_files_transferred
     match = re.search(r'\nNumber of regular files transferred: ([\d,]*)\n',
