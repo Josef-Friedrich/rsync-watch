@@ -5,6 +5,7 @@ import subprocess
 import re
 import socket
 import os
+import shlex
 from rsync_watch.nsca import send_nsca
 
 from rsync_watch._version import get_versions
@@ -28,6 +29,15 @@ def parse_args():
         '--host-name',
         help='The hostname to submit over NSCA to the monitoring.',
     )
+
+    parser.add_argument(
+        '--rsync-args',
+        help='Rsync CLI arguments. Insert some rsync command line arguments.'
+             'Wrap all arguments in one string, for example: '
+             '--rsync-args \'--exclude \"this folder\"\'',
+    )
+
+    # checks
 
     checks = parser.add_argument_group(
         title='checks',
@@ -61,6 +71,8 @@ def parse_args():
              'into it. SSH_LOGIN: “root@192.168.1.1” '
              'or “root@example.com” or “example.com”.'
     )
+
+    # nsca
 
     nsca = parser.add_argument_group(
         title='nsca',
@@ -331,8 +343,11 @@ def main():
         checks.check_ssh_login(args.check_ssh_login)
 
     if checks.have_passed():
-        rsync_command = ['rsync', '-av', '--delete', '--stats', args.src,
-                         args.dest]
+        rsync_command = ['rsync', '-av', '--delete', '--stats']
+        if args.rsync_args:
+            rsync_command += shlex.split(args.rsync_args)
+        rsync_command += [args.src, args.dest]
+
         print('Source: {}'.format(args.src))
         print('Destination: {}'.format(args.dest))
         print('Rsync command: {}'.format(' '.join(rsync_command)))

@@ -359,6 +359,16 @@ class TestIntegrationMock(unittest.TestCase):
         self.assertEqual(str(exception.exception),
                          'The rsync task fails with a non-zero exit code.')
 
+    def test_option_rsync_args(self):
+        result = patch_mulitple(
+            ['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'],
+            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+        )
+        result['subprocess_run'].assert_called_with(
+            ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
+             'tmp1', 'tmp2'], encoding='utf-8', stderr=-2, stdout=-1
+        )
+
 
 class TestUnitFormatPerfData(unittest.TestCase):
 

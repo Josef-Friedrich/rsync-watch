@@ -14,6 +14,8 @@ A Python script to monitor the execution of a rsync task.
 * The script `rsync-watch.py` can be configured to perform various
   checks before starting the rsync process.
 
+
+
 ```
 usage: rsync-watch.py [-h] [--host-name HOST_NAME]
                       [--action-check-failed {exception,skip}]
