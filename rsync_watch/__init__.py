@@ -21,6 +21,10 @@ class StatsNotFoundError(RsyncWatchError):
 
 
 def parse_args():
+    """
+    :return: A `ArgumentParse` object.
+    :rtype: object
+    """
     parser = argparse.ArgumentParser(
         description='A Python script to monitor the execution of a rsync task.'
     )
@@ -91,7 +95,8 @@ def parse_args():
 
     nsca.add_argument(
         '--nsca-encryption-method',
-        help='The NSCA encryption method.'
+        help='The NSCA encryption method. The supported encryption methods '
+             'are: 0 1 2 3 4 8 11 14 15 16'
     )
 
     parser.add_argument(
@@ -240,6 +245,12 @@ def parse_stats(stdout):
 
 
 def format_performance_data(stats):
+    """
+    :param dict stats: A dictionary containing the performance data.
+
+    :return: A concatenated string
+    :rtype: string
+    """
     pairs = []
     for key, value in stats.items():
         pairs.append('{}={}'.format(key, value))
@@ -269,7 +280,11 @@ def service_name(host_name, src, dest):
 
 
 class Checks:
-    """Collect multiple check results."""
+    """Collect multiple check results.
+
+    :params boolean raise_exception: Raise exception it some checks have
+      failed.
+    """
 
     def __init__(self, raise_exception=True):
         self.raise_exception = raise_exception
@@ -278,6 +293,11 @@ class Checks:
 
     @property
     def messages(self):
+        """
+        :return: A concatenated string containing all messages of all failed
+          checks.
+        :rtype: string
+        """
         return ' '.join(self._messages)
 
     def _log_fail(self, message):
@@ -324,12 +344,16 @@ class Checks:
             )
 
     def have_passed(self):
+        """
+        :return: True in fall checks have passed else false.
+        :rtype: boolean"""
         if self.raise_exception and not self.passed:
             raise RsyncWatchError(self.messages)
         return self.passed
 
 
 def main():
+    """Main function. Gets called by `entry_points` `console_scripts`."""
     args = parse_args().parse_args()
     raise_exception = False
     if args.action_check_failed == 'exception':

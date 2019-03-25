@@ -66,6 +66,7 @@ nsca:
   --nsca-password NSCA_PASSWORD
                         The NSCA password.
   --nsca-encryption-method NSCA_ENCRYPTION_METHOD
-                        The NSCA encryption method.
+                        The NSCA encryption method. The supported encryption
+                        methods are: 0 1 2 3 4 8 11 14 15 16
 
 ```
