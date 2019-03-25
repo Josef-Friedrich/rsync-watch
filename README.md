@@ -17,7 +17,7 @@ A Python script to monitor the execution of a rsync task.
 
 
 ```
-usage: rsync-watch.py [-h] [--host-name HOST_NAME]
+usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--rsync-args RSYNC_ARGS]
                       [--action-check-failed {exception,skip}]
                       [--check-file FILE_PATH] [--check-ping DESTINATION]
                       [--check-ssh-login SSH_LOGIN]
@@ -36,6 +36,10 @@ optional arguments:
   -h, --help            show this help message and exit
   --host-name HOST_NAME
                         The hostname to submit over NSCA to the monitoring.
+  --rsync-args RSYNC_ARGS
+                        Rsync CLI arguments. Insert some rsync command line
+                        arguments.Wrap all arguments in one string, for
+                        example: --rsync-args '--exclude "this folder"'
   -v, --version         show program's version number and exit
 
 checks:

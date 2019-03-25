@@ -111,7 +111,7 @@ def parse_args():
         help='The destination ([[USER@]HOST:]DEST)'
     )
 
-    return parser.parse_args()
+    return parser
 
 
 def comma_int_to_int(comma_integer):
@@ -330,7 +330,7 @@ class Checks:
 
 
 def main():
-    args = parse_args()
+    args = parse_args().parse_args()
     raise_exception = False
     if args.action_check_failed == 'exception':
         raise_exception = True
