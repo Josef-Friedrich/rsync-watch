@@ -1,11 +1,21 @@
-from setuptools import setup, find_packages
 import os
+
+from setuptools import setup, find_packages
 import versioneer
 
 
 def read(file_name):
+    """
+    Read the contents of a text file and return its content.
+
+    :param str file_name: The name of the file to read.
+
+    :return: The content of the text file.
+    :rtype: str
+    """
     return open(
-        os.path.join(os.path.dirname(__file__), file_name), encoding='utf-8'
+        os.path.join(os.path.dirname(__file__), file_name),
+        encoding='utf-8'
     ).read()
 
 
@@ -31,12 +41,12 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    install_requires = [
+    install_requires=[
         'pycrypto>=2.0',
         'six',
         'sphinx-argparse',
     ],
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'rsync-watch.py = rsync_watch:main',
         ],
