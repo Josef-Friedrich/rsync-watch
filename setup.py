@@ -31,7 +31,11 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    install_requires = ['pycrypto>=2.0', 'six'],
+    install_requires = [
+        'pycrypto>=2.0',
+        'six',
+        'sphinx-argparse',
+    ],
     entry_points = {
         'console_scripts': [
             'rsync-watch.py = rsync_watch:main',
