@@ -9,7 +9,8 @@ from rsync_watch import \
     parse_stats, \
     RsyncWatchError, \
     service_name, \
-    StatsNotFoundError
+    StatsNotFoundError, \
+    Nsca
 
 import rsync_watch
 from unittest.mock import patch
@@ -121,6 +122,29 @@ def patch_mulitple(args, mocks=[]):
         'stdout': stdout,
         'stderr': stderr,
     }
+
+
+class TestUnitClassNsca(unittest.TestCase):
+
+    def test_initialisation(self):
+        nsca = Nsca(host_name='host', service_name='service',
+                    remote_host='1.2.3.4', password='123', encryption_method=8)
+        self.assertEqual(nsca.host_name, b'host')
+        self.assertEqual(nsca.service_name, b'service')
+        self.assertEqual(nsca.remote_host, b'1.2.3.4')
+        self.assertEqual(nsca.password, b'123')
+        self.assertEqual(nsca.encryption_method, 8)
+
+    def test_method_send(self):
+        nsca = Nsca(host_name='host', service_name='service',
+                    remote_host='1.2.3.4', password='123', encryption_method=8)
+        with patch('rsync_watch.send_nsca') as send_nsca:
+            nsca.send(0, 'test')
+        send_nsca.assert_called_with(
+            encryption_method=8, host_name=b'host', password=b'123',
+            remote_host=b'1.2.3.4', service_name=b'service', status=0,
+            text_output=b'test'
+        )
 
 
 class TestUnitParseStats(unittest.TestCase):

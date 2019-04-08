@@ -352,6 +352,40 @@ class Checks:
         return self.passed
 
 
+class Nsca:
+    """Send NSCA messages to a monitoring server. Wrapper to setup to various
+    informations for the monitoring process.
+    """
+
+    def __init__(self, host_name, service_name, remote_host, password=None,
+                 encryption_method=None):
+        self.host_name = host_name.encode()
+
+        self.service_name = service_name.encode()
+
+        self.remote_host = remote_host.encode()
+
+        self.encryption_method = None
+        if encryption_method:
+            self.encryption_method = int(encryption_method)
+
+        self.password = None
+        if password:
+            self.password = password.encode()
+
+    def send(self, status, text_output):
+        """Send a NSCA message to a monitoring server."""
+        send_nsca(
+            status=int(status),
+            host_name=self.host_name,
+            service_name=self.service_name,
+            text_output=text_output.encode(),
+            remote_host=self.remote_host,
+            password=self.password,
+            encryption_method=self.encryption_method
+        )
+
+
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
     args = parse_args().parse_args()
@@ -401,25 +435,11 @@ def main():
 
             print('Monitoring output: {}'.format(text_output))
 
-            if args.nsca_encryption_method:
-                encryption_method = int(args.nsca_encryption_method)
-            else:
-                encryption_method = None
-
-            if args.nsca_password:
-                password = args.nsca_password.encode()
-            else:
-                password = None
-
-            send_nsca(
-                status=0,
-                host_name=host_name.encode(),
-                service_name=service.encode(),
-                text_output=text_output.encode(),
-                remote_host=args.nsca_remote_host.encode(),
-                password=password,
-                encryption_method=encryption_method
-            )
+            nsca = Nsca(host_name=host_name, service_name=service,
+                        remote_host=args.nsca_remote_host,
+                        password=args.nsca_password,
+                        encryption_method=args.nsca_encryption_method)
+            nsca.send(status=0, text_output=text_output)
     else:
         print(checks.messages)
 
