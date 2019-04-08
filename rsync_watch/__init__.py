@@ -428,6 +428,8 @@ def main():
                 host_name = args.host_name
 
             service = service_name(host_name, args.src, args.dest)
+            print('Service name: {}'.format(service))
+
             stats = parse_stats(process.stdout)
             text_output = 'RSYNC OK | {}'.format(
                 format_performance_data(stats)

@@ -274,6 +274,7 @@ class TestIntegrationMock(unittest.TestCase):
         self.assertIn('Rsync command: rsync -av --delete --stats tmp1 tmp2',
                       stdout)
         self.assertIn('Monitoring output: {}'.format(nsca_output), stdout)
+        self.assertIn('Service name: rsync_test1_tmp1_tmp2', stdout)
 
     # --nsca-remote-host
     # --nsca-password
