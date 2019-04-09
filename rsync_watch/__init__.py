@@ -12,12 +12,25 @@ from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
 
 
+class NscaDummy:
+
+    def send_nsca(self, *args):
+        pass
+
+
+nsca = NscaDummy()
+"""Global instance of the Nsca() class."""
+
+
 class RsyncWatchError(Exception):
     """Base exception for this script."""
 
 
 class StatsNotFoundError(RsyncWatchError):
     """Raised when some stats regex couldn’t be found in stdout."""
+
+    def __init__(self, msg):
+        nsca.send(status=2, text_output='StatsNotFoundError: {}'.format(msg))
 
 
 def parse_args():
@@ -363,7 +376,9 @@ class Nsca:
 
         self.service_name = service_name.encode()
 
-        self.remote_host = remote_host.encode()
+        self.remote_host = None
+        if remote_host:
+            self.remote_host = remote_host.encode()
 
         self.encryption_method = None
         if encryption_method:
@@ -375,20 +390,36 @@ class Nsca:
 
     def send(self, status, text_output):
         """Send a NSCA message to a monitoring server."""
-        send_nsca(
-            status=int(status),
-            host_name=self.host_name,
-            service_name=self.service_name,
-            text_output=text_output.encode(),
-            remote_host=self.remote_host,
-            password=self.password,
-            encryption_method=self.encryption_method
-        )
+        if self.remote_host:
+            send_nsca(
+                status=int(status),
+                host_name=self.host_name,
+                service_name=self.service_name,
+                text_output=text_output.encode(),
+                remote_host=self.remote_host,
+                password=self.password,
+                encryption_method=self.encryption_method
+            )
 
 
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
     args = parse_args().parse_args()
+
+    if not args.host_name:
+        host_name = socket.gethostname()
+    else:
+        host_name = args.host_name
+
+    service = service_name(host_name, args.src, args.dest)
+    print('Service name: {}'.format(service))
+
+    global nsca
+    nsca = Nsca(host_name=host_name, service_name=service,
+                remote_host=args.nsca_remote_host,
+                password=args.nsca_password,
+                encryption_method=args.nsca_encryption_method)
+
     raise_exception = False
     if args.action_check_failed == 'exception':
         raise_exception = True
@@ -417,31 +448,18 @@ def main():
         print('Rsync output:')
         print(process.stdout)
         if process.returncode != 0:
-            raise RsyncWatchError(
-                'The rsync task fails with a non-zero exit code.'
-            )
+            msg = 'The rsync task fails with a non-zero exit code.'
+            nsca.send(status=2, text_output=msg)
+            raise RsyncWatchError(msg)
 
-        if args.nsca_remote_host:
-            if not args.host_name:
-                host_name = socket.gethostname()
-            else:
-                host_name = args.host_name
+        stats = parse_stats(process.stdout)
+        text_output = 'RSYNC OK | {}'.format(
+            format_performance_data(stats)
+        )
 
-            service = service_name(host_name, args.src, args.dest)
-            print('Service name: {}'.format(service))
+        print('Monitoring output: {}'.format(text_output))
 
-            stats = parse_stats(process.stdout)
-            text_output = 'RSYNC OK | {}'.format(
-                format_performance_data(stats)
-            )
-
-            print('Monitoring output: {}'.format(text_output))
-
-            nsca = Nsca(host_name=host_name, service_name=service,
-                        remote_host=args.nsca_remote_host,
-                        password=args.nsca_password,
-                        encryption_method=args.nsca_encryption_method)
-            nsca.send(status=0, text_output=text_output)
+        nsca.send(status=0, text_output=text_output)
     else:
         print(checks.messages)
 
