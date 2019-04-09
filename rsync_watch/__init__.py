@@ -442,7 +442,10 @@ def main():
     if args.check_ssh_login:
         checks.check_ssh_login(args.check_ssh_login)
 
-    if checks.have_passed():
+    if not checks.have_passed():
+        nsca.send(status=1, text_output=checks.messages)
+        print(checks.messages)
+    else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
@@ -470,8 +473,6 @@ def main():
         print('Monitoring output: {}'.format(text_output))
 
         nsca.send(status=0, text_output=text_output)
-    else:
-        print(checks.messages)
 
 
 if __name__ == "__main__":
