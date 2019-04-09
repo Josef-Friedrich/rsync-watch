@@ -12,25 +12,34 @@ from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
 
 
-class NscaDummy:
+class NscaInterface:
+    """Class that should be overloaded by the Nsca() class. To provide a
+    stable interface. The class Nsca() needs many configuration values which
+    are not always available."""
 
     def send_nsca(self, *args):
         pass
 
 
-nsca = NscaDummy()
+nsca = NscaInterface()
 """Global instance of the Nsca() class."""
 
 
 class RsyncWatchError(Exception):
     """Base exception for this script."""
 
+    def __init__(self, msg):
+        nsca.send(
+            status=2,
+            text_output='{}: {}'.format(
+                self.__class__.__name__,
+                msg,
+            )
+        )
+
 
 class StatsNotFoundError(RsyncWatchError):
     """Raised when some stats regex couldn’t be found in stdout."""
-
-    def __init__(self, msg):
-        nsca.send(status=2, text_output='StatsNotFoundError: {}'.format(msg))
 
 
 def parse_args():
@@ -390,6 +399,8 @@ class Nsca:
 
     def send(self, status, text_output):
         """Send a NSCA message to a monitoring server."""
+        print('NSCA status: {}'.format(status))
+        print('NSCA text output: {}'.format(text_output))
         if self.remote_host:
             send_nsca(
                 status=int(status),
@@ -449,7 +460,6 @@ def main():
         print(process.stdout)
         if process.returncode != 0:
             msg = 'The rsync task fails with a non-zero exit code.'
-            nsca.send(status=2, text_output=msg)
             raise RsyncWatchError(msg)
 
         stats = parse_stats(process.stdout)
