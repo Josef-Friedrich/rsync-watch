@@ -326,7 +326,7 @@ class TestIntegrationMock(unittest.TestCase):
             )
         self.assertEqual(
             str(exception.exception),
-            '--check-file: The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” '
+            '--check-file: The file \'/d2c75c94-78b8-4f09-9fc4-3779d020bbd4\' '
             'doesn’t exist.'
         )
 
@@ -339,7 +339,7 @@ class TestIntegrationMock(unittest.TestCase):
                 [mock.Mock(returncode=1), mock.Mock()]
             )
         self.assertEqual(str(exception.exception),
-                         '--check-ping: “8.8.8.8” is not reachable.')
+                         '--check-ping: \'8.8.8.8\' is not reachable.')
 
     def test_check_ping_action_check_failed_pass(self):
         result = patch_mulitple(
@@ -411,7 +411,7 @@ class TestIntegrationMock(unittest.TestCase):
             )
         self.assertEqual(
             str(exception.exception),
-            '--check-ssh-login: “test@example.com” is not reachable.'
+            '--check-ssh-login: \'test@example.com\' is not reachable.'
         )
 
     def test_rsync_exception(self):
@@ -477,7 +477,7 @@ class TestUnitClassChecks(unittest.TestCase):
         self.assertEqual(checks.have_passed(), False)
         self.assertEqual(
             checks.messages,
-            '--check-file: The file “/d2c75c94-78b8-4f09-9fc4-3779d020bbd4” '
+            '--check-file: The file \'/d2c75c94-78b8-4f09-9fc4-3779d020bbd4\' '
             'doesn’t exist.'
         )
 
