@@ -19,64 +19,58 @@ from unittest import mock
 SCRIPT = 'rsync-watch.py'
 
 OUTPUT1 = '''
-sending incremental file list
-
-Number of files: 1 (dir: 2)
-Number of created files: 3
-Number of deleted files: 4
-Number of regular files transferred: 5
-Total file size: 6 bytes
-Total transferred file size: 7 bytes
-Literal data: 8 bytes
-Matched data: 9 bytes
-File list size: 10
-File list generation time: 11.000 seconds
-File list transfer time: 12.000 seconds
-Total bytes sent: 13
-Total bytes received: 14
-
-sent 61 bytes  received 17 bytes  156.00 bytes/sec
-total size is 0  speedup is 0.00
+1555253625.2676451:DEBUG:sending incremental file list
+1555253625.2676451:DEBUG:Number of files: 1 (dir: 2)
+1555253625.2676451:DEBUG:Number of created files: 3
+1555253625.2676451:DEBUG:Number of deleted files: 4
+1555253625.2676451:DEBUG:Number of regular files transferred: 5
+1555253625.2676451:DEBUG:Total file size: 6 bytes
+1555253625.2676451:DEBUG:Total transferred file size: 7 bytes
+1555253625.2676451:DEBUG:Literal data: 8 bytes
+1555253625.2676451:DEBUG:Matched data: 9 bytes
+1555253625.2676451:DEBUG:File list size: 10
+1555253625.2676451:DEBUG:File list generation time: 11.000 seconds
+1555253625.2676451:DEBUG:File list transfer time: 12.000 seconds
+1555253625.2676451:DEBUG:Total bytes sent: 13
+1555253625.2676451:DEBUG:Total bytes received: 14
+1555253625.2676451:DEBUG:sent 61 bytes  received 17 bytes  156.00 bytes/sec
+1555253625.2676451:DEBUG:total size is 0  speedup is 0.00
 '''
 
 OUTPUT_REAL = '''
-Number of files: 4,928 (reg: 3,256, dir: 1,672)
-Number of created files: 112 (reg: 64, dir: 48)
-Number of deleted files: 214 (reg: 125, dir: 89)
-Number of regular files transferred: 64
-Total file size: 4,222,882,233 bytes
-Total transferred file size: 13,472,638 bytes
-Literal data: 13,472,638 bytes
-Matched data: 0 bytes
-File list size: 65,536
-File list generation time: 0.001 seconds
-File list transfer time: 0.000 seconds
-Total bytes sent: 13,631,370
-Total bytes received: 19,859
-
-sent 13,631,370 bytes  received 19,859 bytes  700,063.03 bytes/sec
-total size is 4,222,882,233  speedup is 309.34
+1555253625.2676451:DEBUG:Number of files: 4,928 (reg: 3,256, dir: 1,672)
+1555253625.2676451:DEBUG:Number of created files: 112 (reg: 64, dir: 48)
+1555253625.2676451:DEBUG:Number of deleted files: 214 (reg: 125, dir: 89)
+1555253625.2676451:DEBUG:Number of regular files transferred: 64
+1555253625.2676451:DEBUG:Total file size: 4,222,882,233 bytes
+1555253625.2676451:DEBUG:Total transferred file size: 13,472,638 bytes
+1555253625.2676451:DEBUG:Literal data: 13,472,638 bytes
+1555253625.2676451:DEBUG:Matched data: 0 bytes
+1555253625.2676451:DEBUG:File list size: 65,536
+1555253625.2676451:DEBUG:File list generation time: 0.001 seconds
+1555253625.2676451:DEBUG:File list transfer time: 0.000 seconds
+1555253625.2676451:DEBUG:Total bytes sent: 13,631,370
+1555253625.2676451:DEBUG:Total bytes received: 19,859
+1555253625.2676451:DEBUG:sent 13,631,370 bytes  received 19,859 bytes
+1555253625.2676451:DEBUG:total size is 4,222,882,233  speedup is 309.34
 '''
 
 OUTPUT_WITHOUT_DELETED = '''
-receiving incremental file list
-last_pop3
-
-Number of files: 40 (reg: 16, dir: 24)
-Number of created files: 0
-Number of regular files transferred: 1
-Total file size: 22,083 bytes
-Total transferred file size: 14 bytes
-Literal data: 0 bytes
-Matched data: 14 bytes
-File list size: 1,096
-File list generation time: 0.001 seconds
-File list transfer time: 0.000 seconds
-Total bytes sent: 59
-Total bytes received: 1,170
-
-sent 59 bytes  received 1,170 bytes  819.33 bytes/sec
-total size is 22,083  speedup is 17.97
+1555253625.2676451:DEBUG:receiving incremental file list
+1555253625.2676451:DEBUG:Number of files: 40 (reg: 16, dir: 24)
+1555253625.2676451:DEBUG:Number of created files: 0
+1555253625.2676451:DEBUG:Number of regular files transferred: 1
+1555253625.2676451:DEBUG:Total file size: 22,083 bytes
+1555253625.2676451:DEBUG:Total transferred file size: 14 bytes
+1555253625.2676451:DEBUG:Literal data: 0 bytes
+1555253625.2676451:DEBUG:Matched data: 14 bytes
+1555253625.2676451:DEBUG:File list size: 1,096
+1555253625.2676451:DEBUG:File list generation time: 0.001 seconds
+1555253625.2676451:DEBUG:File list transfer time: 0.000 seconds
+1555253625.2676451:DEBUG:Total bytes sent: 59
+1555253625.2676451:DEBUG:Total bytes received: 1,170
+1555253625.2676451:DEBUG:sent 59 bytes  received 1,170 bytes  819.33 bytes/sec
+1555253625.2676451:DEBUG:total size is 22,083  speedup is 17.97
 '''
 
 
