@@ -1,15 +1,44 @@
 #! /usr/bin/env python3
 
-import argparse
-import subprocess
-import re
-import socket
-import os
-import shlex
 from rsync_watch.nsca import send_nsca
+import argparse
+import logging
+import os
+import queue
+import re
+import shlex
+import socket
+import subprocess
+import threading
+from io import StringIO
 
 from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
+
+
+class LogStream(object):
+    """https://stackoverflow.com/a/46139323/10193818"""
+    def __init__(self):
+        self._logs = []
+
+    def write(self, record):
+        record = record.strip()
+        print(record)
+        self._logs.append(record)
+
+    def flush(self):
+        pass
+
+    def __str__(self):
+        return '\n'.join(self._logs)
+
+
+log_stream = LogStream()
+logging.basicConfig(
+    stream=log_stream,
+    format='%(created)s:%(levelname)s:%(message)s',
+    level=logging.DEBUG
+)
 
 
 class NscaInterface:
@@ -163,7 +192,7 @@ def parse_stats(stdout):
     result = {}
 
     # num_files
-    match = re.search(r'\nNumber of files: ([\d,]*)', stdout)
+    match = re.search(r'INFO:Number of files: ([\d,]*)', stdout)
     if match:
         result['num_files'] = comma_int_to_int(match[1])
     else:
@@ -172,7 +201,7 @@ def parse_stats(stdout):
         )
 
     # num_created_files
-    match = re.search(r'\nNumber of created files: ([\d,]*)', stdout)
+    match = re.search(r'INFO:Number of created files: ([\d,]*)', stdout)
     if match:
         result['num_created_files'] = comma_int_to_int(match[1])
     else:
@@ -183,14 +212,14 @@ def parse_stats(stdout):
     # num_deleted_files
     # This line is sometimes missing on rsync --version 3.1.2
     # raise no error
-    match = re.search(r'\nNumber of deleted files: ([\d,]*)', stdout)
+    match = re.search(r'INFO:Number of deleted files: ([\d,]*)', stdout)
     if match:
         result['num_deleted_files'] = comma_int_to_int(match[1])
     else:
         result['num_deleted_files'] = 0
 
     # num_files_transferred
-    match = re.search(r'\nNumber of regular files transferred: ([\d,]*)\n',
+    match = re.search(r'INFO:Number of regular files transferred: ([\d,]*)\n',
                       stdout)
     if match:
         result['num_files_transferred'] = comma_int_to_int(match[1])
@@ -198,14 +227,14 @@ def parse_stats(stdout):
         raise StatsNotFoundError('Number of regular files transferred: X,XXX')
 
     # total_size
-    match = re.search(r'\nTotal file size: ([\d,]*) bytes\n', stdout)
+    match = re.search(r'INFO:Total file size: ([\d,]*) bytes\n', stdout)
     if match:
         result['total_size'] = comma_int_to_int(match[1])
     else:
         raise StatsNotFoundError('Total file size: X,XXX bytes')
 
     # transferred_size
-    match = re.search(r'\nTotal transferred file size: ([\d,]*) bytes\n',
+    match = re.search(r'INFO:Total transferred file size: ([\d,]*) bytes\n',
                       stdout)
     if match:
         result['transferred_size'] = comma_int_to_int(match[1])
@@ -213,28 +242,28 @@ def parse_stats(stdout):
         raise StatsNotFoundError('Total transferred file size: X,XXX bytes')
 
     # literal_data
-    match = re.search(r'\nLiteral data: ([\d,]*) bytes\n', stdout)
+    match = re.search(r'INFO:Literal data: ([\d,]*) bytes\n', stdout)
     if match:
         result['literal_data'] = comma_int_to_int(match[1])
     else:
         raise StatsNotFoundError('Literal data: X,XXX bytes')
 
     # matched_data
-    match = re.search(r'\nMatched data: ([\d,]*) bytes\n', stdout)
+    match = re.search(r'INFO:Matched data: ([\d,]*) bytes\n', stdout)
     if match:
         result['matched_data'] = comma_int_to_int(match[1])
     else:
         raise StatsNotFoundError('Matched data: X,XXX bytes')
 
     # list_size
-    match = re.search(r'\nFile list size: ([\d,]*)\n', stdout)
+    match = re.search(r'INFO:File list size: ([\d,]*)\n', stdout)
     if match:
         result['list_size'] = comma_int_to_int(match[1])
     else:
         raise StatsNotFoundError('File list size: X,XXX')
 
     # list_generation_time
-    match = re.search(r'\nFile list generation time: ([\d\.]*) seconds\n',
+    match = re.search(r'INFO:File list generation time: ([\d\.]*) seconds\n',
                       stdout)
     if match:
         result['list_generation_time'] = float(match[1])
@@ -242,7 +271,7 @@ def parse_stats(stdout):
         raise StatsNotFoundError('File list generation time: X.XXX seconds')
 
     # list_transfer_time
-    match = re.search(r'\nFile list transfer time: ([\d\.]*) seconds\n',
+    match = re.search(r'INFO:File list transfer time: ([\d\.]*) seconds\n',
                       stdout)
     if match:
         result['list_transfer_time'] = float(match[1])
@@ -250,14 +279,14 @@ def parse_stats(stdout):
         raise StatsNotFoundError('File list transfer time: X.XXX seconds')
 
     # bytes_sent
-    match = re.search(r'\nTotal bytes sent: ([\d,]*)\n', stdout)
+    match = re.search(r'INFO:Total bytes sent: ([\d,]*)\n', stdout)
     if match:
         result['bytes_sent'] = comma_int_to_int(match[1])
     else:
         raise StatsNotFoundError('Total bytes sent: X,XXX')
 
     # bytes_received
-    match = re.search(r'\nTotal bytes received: ([\d,]*)\n', stdout)
+    match = re.search(r'INFO:Total bytes received: ([\d,]*)\n', stdout)
     if match:
         result['bytes_received'] = comma_int_to_int(match[1])
     else:
@@ -417,6 +446,16 @@ class Nsca:
             )
 
 
+def reader(pipe, queue, channel):
+    try:
+        with pipe:
+            for line in iter(pipe.readline, b''):
+                queue.put((pipe, line, channel))
+    finally:
+        queue.put(None)
+
+
+
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
     args = parse_args().parse_args()
@@ -427,7 +466,7 @@ def main():
         host_name = args.host_name
 
     service = service_name(host_name, args.src, args.dest)
-    print('Service name: {}'.format(service))
+    logging.info('Service name: {}'.format(service))
 
     global nsca
     nsca = Nsca(host_name=host_name, service_name=service,
@@ -448,33 +487,47 @@ def main():
 
     if not checks.have_passed():
         nsca.send(status=1, text_output=checks.messages)
-        print(checks.messages)
+        logging.info(checks.messages)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
         rsync_command += [args.src, args.dest]
 
-        print('Source: {}'.format(args.src))
-        print('Destination: {}'.format(args.dest))
-        print('Rsync command: {}'.format(' '.join(rsync_command)))
+        logging.info('Source: {}'.format(args.src))
+        logging.info('Destination: {}'.format(args.dest))
+        logging.info('Rsync command: {}'.format(' '.join(rsync_command)))
 
-        process = subprocess.run(rsync_command, encoding='utf-8',
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
+        process = subprocess.Popen(rsync_command,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, bufsize=1)
 
-        print('Rsync output:')
-        print(process.stdout)
+        q = queue.Queue()
+        threading.Thread(target=reader, args=[process.stdout, q, 'stdout']).start()
+        threading.Thread(target=reader, args=[process.stderr, q, 'stderr']).start()
+        for _ in range(2):
+            for source, line, channel in iter(q.get, None):
+                if line:
+                    line = line.decode('utf-8').strip()
+                    if channel == 'stderr':
+                        logging.error(line)
+                    if channel == 'stdout':
+                        logging.info(line)
+
+        process.wait()
+
+        stdout = str(log_stream)
+
         if process.returncode != 0:
             msg = 'The rsync task fails with a non-zero exit code.'
             raise RsyncWatchError(msg)
 
-        stats = parse_stats(process.stdout)
+        stats = parse_stats(stdout)
         text_output = 'RSYNC OK | {}'.format(
             format_performance_data(stats)
         )
 
-        print('Monitoring output: {}'.format(text_output))
+        logging.info('Monitoring output: {}'.format(text_output))
 
         nsca.send(status=0, text_output=text_output)
 
