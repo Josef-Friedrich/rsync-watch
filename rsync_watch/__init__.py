@@ -16,29 +16,27 @@ from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
 
 
-class LogStream(object):
-    """https://stackoverflow.com/a/46139323/10193818"""
+class StreamAndMemoryHandler(logging.Handler):
+
     def __init__(self):
-        self._logs = []
+        logging.Handler.__init__(self)
+        self._records = []
 
-    def write(self, record):
-        record = record.strip()
+    def emit(self, record):
+        record = self.format(record)
+        self._records.append(record)
         print(record)
-        self._logs.append(record)
-
-    def flush(self):
-        pass
 
     def __str__(self):
-        return '\n'.join(self._logs)
+        return '\n'.join(self._records)
 
 
-log_stream = LogStream()
-logging.basicConfig(
-    stream=log_stream,
-    format='%(created)s:%(levelname)s:%(message)s',
-    level=logging.DEBUG
-)
+log = logging.getLogger(__name__)
+stream_and_memory_handler = StreamAndMemoryHandler()
+formatter = logging.Formatter('%(created)s:%(levelname)s:%(message)s')
+stream_and_memory_handler.setFormatter(formatter)
+log.setLevel(logging.DEBUG)
+log.addHandler(stream_and_memory_handler)
 
 
 class NscaInterface:
@@ -466,7 +464,7 @@ def main():
         host_name = args.host_name
 
     service = service_name(host_name, args.src, args.dest)
-    logging.info('Service name: {}'.format(service))
+    log.info('Service name: {}'.format(service))
 
     global nsca
     nsca = Nsca(host_name=host_name, service_name=service,
@@ -487,16 +485,16 @@ def main():
 
     if not checks.have_passed():
         nsca.send(status=1, text_output=checks.messages)
-        logging.info(checks.messages)
+        log.info(checks.messages)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
         rsync_command += [args.src, args.dest]
 
-        logging.info('Source: {}'.format(args.src))
-        logging.info('Destination: {}'.format(args.dest))
-        logging.info('Rsync command: {}'.format(' '.join(rsync_command)))
+        log.info('Source: {}'.format(args.src))
+        log.info('Destination: {}'.format(args.dest))
+        log.info('Rsync command: {}'.format(' '.join(rsync_command)))
 
         process = subprocess.Popen(rsync_command,
                                    stdout=subprocess.PIPE,
@@ -509,14 +507,16 @@ def main():
             for source, line, channel in iter(q.get, None):
                 if line:
                     line = line.decode('utf-8').strip()
+
+                if line:
                     if channel == 'stderr':
-                        logging.error(line)
+                        log.error(line)
                     if channel == 'stdout':
-                        logging.info(line)
+                        log.info(line)
 
         process.wait()
 
-        stdout = str(log_stream)
+        stdout = str(stream_and_memory_handler)
 
         if process.returncode != 0:
             msg = 'The rsync task fails with a non-zero exit code.'
@@ -527,7 +527,7 @@ def main():
             format_performance_data(stats)
         )
 
-        logging.info('Monitoring output: {}'.format(text_output))
+        log.info('Monitoring output: {}'.format(text_output))
 
         nsca.send(status=0, text_output=text_output)
 
