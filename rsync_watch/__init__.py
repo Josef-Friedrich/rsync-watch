@@ -24,7 +24,7 @@ class StreamAndMemoryHandler(logging.Handler):
 
     @staticmethod
     def _print_colorized(record):
-        match = re.search(r'([0-9\.]+):([A-Z]+):(.*)', record)
+        match = re.search(r'([0-9_]+):([A-Z]+):(.*)', record)
         time = match.group(1)
         level = match.group(2)
         msg = match.group(3)
@@ -41,7 +41,7 @@ class StreamAndMemoryHandler(logging.Handler):
             color = 'white'
         print('{}:{}:{}'.format(
             time,
-            termcolor.colored(level, color, attrs=['reverse']),
+            termcolor.colored(level.ljust(8), color, attrs=['reverse']),
             msg,
         ))
 
@@ -56,7 +56,10 @@ class StreamAndMemoryHandler(logging.Handler):
 
 log = logging.getLogger(__name__)
 stream_and_memory_handler = StreamAndMemoryHandler()
-formatter = logging.Formatter('%(created)s:%(levelname)s:%(message)s')
+formatter = logging.Formatter(
+    fmt='%(asctime)s_%(msecs)03d:%(levelname)s:%(message)s',
+    datefmt='%Y%m%d_%H%M%S',
+)
 stream_and_memory_handler.setFormatter(formatter)
 log.setLevel(logging.DEBUG)
 log.addHandler(stream_and_memory_handler)
