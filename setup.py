@@ -45,6 +45,7 @@ setup(
         'pycrypto>=2.0',
         'six',
         'sphinx-argparse',
+        'termcolor',
     ],
     entry_points={
         'console_scripts': [

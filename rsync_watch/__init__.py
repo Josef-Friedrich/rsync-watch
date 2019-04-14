@@ -10,6 +10,7 @@ import shlex
 import socket
 import subprocess
 import threading
+import termcolor
 
 from rsync_watch._version import get_versions
 __version__ = get_versions()['version']
@@ -21,10 +22,33 @@ class StreamAndMemoryHandler(logging.Handler):
         logging.Handler.__init__(self)
         self._records = []
 
+    @staticmethod
+    def _print_colorized(record):
+        match = re.search(r'([0-9\.]+):([A-Z]+):(.*)', record)
+        time = match.group(1)
+        level = match.group(2)
+        msg = match.group(3)
+
+        if level == 'DEBUG':
+            color = 'grey'
+        elif level == 'INFO':
+            color = 'white'
+        elif level == 'WARNING':
+            color = 'yellow'
+        elif level == 'ERROR':
+            color = 'red'
+        else:
+            color = 'white'
+        print('{}:{}:{}'.format(
+            time,
+            termcolor.colored(level, color, attrs=['reverse']),
+            msg,
+        ))
+
     def emit(self, record):
         record = self.format(record)
         self._records.append(record)
-        print(record)
+        self._print_colorized(record)
 
     def __str__(self):
         return '\n'.join(self._records)
