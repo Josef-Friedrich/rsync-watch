@@ -377,6 +377,7 @@ class Checks:
 
     def _log_fail(self, message):
         self._messages.append(message)
+        log.warning(message)
         self.passed = False
 
     def check_file(self, file_path):
@@ -389,6 +390,10 @@ class Checks:
                 '--check-file: The file \'{}\' doesn’t exist.'.format(
                     file_path
                 )
+            )
+        else:
+            log.info(
+                '--check-file: The file \'{}\' exists.'.format(file_path)
             )
 
     def check_ping(self, dest):
@@ -403,6 +408,8 @@ class Checks:
             self._log_fail(
                 '--check-ping: \'{}\' is not reachable.'.format(dest)
             )
+        else:
+            log.info('--check-ping: \'{}\' is reachable.'.format(dest))
 
     def check_ssh_login(self, ssh_host):
         """Check if the given host is online by retrieving its hostname.
@@ -419,6 +426,10 @@ class Checks:
                                  stderr=subprocess.DEVNULL)
         if not process.returncode == 0:
             self._log_fail(
+                '--check-ssh-login: \'{}\' is not reachable.'.format(ssh_host)
+            )
+        else:
+            log.info(
                 '--check-ssh-login: \'{}\' is not reachable.'.format(ssh_host)
             )
 
