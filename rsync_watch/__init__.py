@@ -481,13 +481,47 @@ class Nsca:
             )
 
 
-def reader(pipe, queue, channel):
-    try:
-        with pipe:
-            for line in iter(pipe.readline, b''):
-                queue.put((line, channel))
-    finally:
-        queue.put(None)
+class RunCommand:
+
+    def __init__(self, command):
+        self.queue = queue.Queue()
+        self.command = command
+
+    def _stdout_stderr_reader(self, pipe, channel):
+        try:
+            with pipe:
+                for line in iter(pipe.readline, b''):
+                    self.queue.put((line, channel))
+        finally:
+            self.queue.put(None)
+
+    def _start_thread(self, pipe, channel):
+        threading.Thread(
+            target=self._stdout_stderr_reader,
+            args=[pipe, channel]
+        ).start()
+
+    def run(self):
+        process = subprocess.Popen(self.command,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, bufsize=1)
+
+        self._start_thread(process.stdout, 'stdout')
+        self._start_thread(process.stderr, 'stderr')
+
+        for _ in range(2):
+            for line, channel in iter(self.queue.get, None):
+                if line:
+                    line = line.decode('utf-8').strip()
+
+                if line:
+                    if channel == 'stderr':
+                        log.error(line)
+                    if channel == 'stdout':
+                        log.debug(line)
+
+        process.wait()
+        return process
 
 
 def main():
@@ -532,27 +566,8 @@ def main():
         log.info('Destination: {}'.format(args.dest))
         log.info('Rsync command: {}'.format(' '.join(rsync_command)))
 
-        process = subprocess.Popen(rsync_command,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, bufsize=1)
-
-        q = queue.Queue()
-        threading.Thread(target=reader,
-                         args=[process.stdout, q, 'stdout']).start()
-        threading.Thread(target=reader,
-                         args=[process.stderr, q, 'stderr']).start()
-        for _ in range(2):
-            for line, channel in iter(q.get, None):
-                if line:
-                    line = line.decode('utf-8').strip()
-
-                if line:
-                    if channel == 'stderr':
-                        log.error(line)
-                    if channel == 'stdout':
-                        log.debug(line)
-
-        process.wait()
+        run = RunCommand(rsync_command)
+        process = run.run()
 
         stdout = str(stream_and_memory_handler)
 
