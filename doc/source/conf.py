@@ -26,5 +26,10 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 html_static_path = []
 htmlhelp_basename = 'rsync_watchdoc'
-autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'show-inheritance']
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'private-members': True,
+    'show-inheritance': True,
+}
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}

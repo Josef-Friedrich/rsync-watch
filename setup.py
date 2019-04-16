@@ -44,7 +44,6 @@ setup(
     install_requires=[
         'pycrypto>=2.0',
         'six',
-        'sphinx-argparse',
         'jflib>=0.0.4',
     ],
     entry_points={

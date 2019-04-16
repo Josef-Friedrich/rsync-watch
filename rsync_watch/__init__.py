@@ -1,15 +1,11 @@
 #! /usr/bin/env python3
 
 import argparse
-import logging
 import os
-import queue
 import re
 import shlex
 import socket
 import subprocess
-import termcolor
-import threading
 
 from jflib import Watch
 from rsync_watch._version import get_versions
@@ -439,7 +435,6 @@ class Nsca:
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
     args = parse_args().parse_args()
-
 
     if not args.host_name:
         host_name = socket.gethostname()
