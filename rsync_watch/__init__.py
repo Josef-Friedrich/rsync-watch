@@ -478,18 +478,14 @@ def main():
         watch.log.info('Source: {}'.format(args.src))
         watch.log.info('Destination: {}'.format(args.dest))
         watch.log.info('Rsync command: {}'.format(' '.join(rsync_command)))
-        watch.log.critical('lol')
-        watch.log.info('lollll')
 
         process = watch.run(rsync_command)
-
-        stdout = watch.log_handler.stdout
 
         if process.returncode != 0:
             msg = 'The rsync task fails with a non-zero exit code.'
             raise RsyncWatchError(msg)
 
-        stats = parse_stats(stdout)
+        stats = parse_stats(watch.stdout)
         text_output = 'RSYNC OK | {}'.format(
             format_performance_data(stats)
         )
