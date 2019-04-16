@@ -45,7 +45,7 @@ setup(
         'pycrypto>=2.0',
         'six',
         'sphinx-argparse',
-        'termcolor',
+        'jflib',
     ],
     entry_points={
         'console_scripts': [
