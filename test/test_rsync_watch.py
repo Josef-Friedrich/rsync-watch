@@ -1,17 +1,14 @@
 import unittest
 import subprocess
 import os
-from jflib import Capturing
 from rsync_watch import \
     Checks, \
     format_performance_data, \
     parse_stats, \
-    RsyncWatchError, \
     service_name, \
     StatsNotFoundError, \
     Nsca
 
-import rsync_watch
 from unittest.mock import patch
 
 SCRIPT = 'rsync-watch.py'
@@ -70,30 +67,6 @@ Total bytes received: 1,170
 sent 59 bytes  received 1,170 bytes  819.33 bytes/sec
 total size is 22,083  speedup is 17.97
 '''
-
-
-def patch_mulitple(args, mocks_subprocess_run=[], watch_run_stdout=OUTPUT1,
-                   watch_run_returncode=0):
-    with patch('sys.argv',  ['cmd'] + list(args)), \
-         patch('rsync_watch.send_nsca') as send_nsca, \
-         patch('rsync_watch.subprocess.run') as subprocess_run, \
-         patch('rsync_watch.watch') as watch, \
-         Capturing(stream='stdout') as stdout, \
-         Capturing(stream='stderr') as stderr:
-
-        watch.run.return_value.returncode = watch_run_returncode
-        watch.stdout = watch_run_stdout
-        if mocks_subprocess_run:
-            subprocess_run.side_effect = mocks_subprocess_run
-
-        rsync_watch.main()
-    return {
-        'watch': watch,
-        'subprocess_run': subprocess_run,
-        'send_nsca': send_nsca,
-        'stdout': stdout,
-        'stderr': stderr,
-    }
 
 
 class TestUnitClassNsca(unittest.TestCase):
@@ -208,74 +181,6 @@ class TestUnitServiceName(unittest.TestCase):
             'rsync_wnas_serverway-var-backups-mysql_'
             'data-backup-host-serverway-mysql'
         )
-
-
-class TestIntegrationMock(unittest.TestCase):
-
-    def test_minimal(self):
-        result = patch_mulitple(
-            ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
-             'tmp2']
-        )
-        result['watch'].run.assert_called_with(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-        )
-        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
-                      'num_deleted_files=4 num_files_transferred=5 ' \
-                      'total_size=6 transferred_size=7 literal_data=8 ' \
-                      'matched_data=9 list_size=10 ' \
-                      'list_generation_time=11.0 ' \
-                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
-
-        result['send_nsca'].assert_called_with(
-            host_name=b'test1',
-            remote_host=b'1.2.3.4',
-            service_name=b'rsync_test1_tmp1_tmp2',
-            status=0,
-            text_output=nsca_output.encode(),
-            password=None,
-            encryption_method=None
-        )
-        stdout = '\n'.join(result['stdout'])
-        self.assertIn('Source: tmp1', stdout)
-        self.assertIn('Destination: tmp2', stdout)
-        self.assertIn('Rsync command: rsync -av --delete --stats tmp1 tmp2',
-                      stdout)
-        self.assertIn('Monitoring output: {}'.format(nsca_output), stdout)
-        self.assertIn('Service name: rsync_test1_tmp1_tmp2', stdout)
-
-    # --nsca-remote-host
-    # --nsca-password
-    # --nsca-encryption-method
-    def test_nsca(self):
-        result = patch_mulitple(
-            ['--nsca-remote-host', '1.2.3.4', '--nsca-password', '1234',
-             '--nsca-encryption-method', '8',  '--host-name', 'test1', 'tmp1',
-             'tmp2']
-        )
-        self.assertEqual(result['watch'].run.call_count, 1)
-        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
-                      'num_deleted_files=4 num_files_transferred=5 ' \
-                      'total_size=6 transferred_size=7 literal_data=8 ' \
-                      'matched_data=9 list_size=10 ' \
-                      'list_generation_time=11.0 ' \
-                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
-
-        result['send_nsca'].assert_called_with(
-            host_name=b'test1',
-            remote_host=b'1.2.3.4',
-            service_name=b'rsync_test1_tmp1_tmp2',
-            status=0,
-            text_output=nsca_output.encode(),
-            password=b'1234',
-            encryption_method=8
-        )
-
-    def test_rsync_exception(self):
-        with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(['tmp1', 'tmp2'], watch_run_returncode=1)
-        self.assertEqual(str(exception.exception),
-                         'The rsync task fails with a non-zero exit code.')
 
 
 class TestUnitFormatPerfData(unittest.TestCase):
