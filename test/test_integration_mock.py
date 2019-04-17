@@ -53,62 +53,27 @@ class TestCase(unittest.TestCase):
 
 class TestIntegrationMock(TestCase):
 
-    def test_minimal(self):
-        self.patch(
-            ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
-             'tmp2']
-        )
+    def test_log_info(self):
+        self.patch(['--host-name', 'test1', 'tmp1', 'tmp2'])
         self.watch.run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
         )
-        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
-                      'num_deleted_files=4 num_files_transferred=5 ' \
-                      'total_size=6 transferred_size=7 literal_data=8 ' \
-                      'matched_data=9 list_size=10 ' \
-                      'list_generation_time=11.0 ' \
-                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
 
-        self.send_nsca.assert_called_with(
-            host_name=b'test1',
-            remote_host=b'1.2.3.4',
-            service_name=b'rsync_test1_tmp1_tmp2',
-            status=0,
-            text_output=nsca_output.encode(),
-            password=None,
-            encryption_method=None
+        info = self.watch.log.info
+        info.assert_any_call('Source: tmp1')
+        info.assert_any_call('Destination: tmp2')
+        info.assert_any_call(
+            'Rsync command: rsync -av --delete --stats tmp1 tmp2'
         )
-        self.watch.log.info.assert_any_call('Source: tmp1')
-        # self.assertIn('Destination: tmp2', stdout)
-        # self.assertIn('Rsync command: rsync -av --delete --stats tmp1 tmp2',
-        #               stdout)
-        # self.assertIn('Monitoring output: {}'.format(nsca_output), stdout)
-        # self.assertIn('Service name: rsync_test1_tmp1_tmp2', stdout)
-
-    # --nsca-remote-host
-    # --nsca-password
-    # --nsca-encryption-method
-    def test_nsca(self):
-        self.patch(
-            ['--nsca-remote-host', '1.2.3.4', '--nsca-password', '1234',
-             '--nsca-encryption-method', '8',  '--host-name', 'test1', 'tmp1',
-             'tmp2']
+        self.watch.log.info.assert_any_call(
+            'Service name: rsync_test1_tmp1_tmp2'
         )
-        self.assertEqual(self.watch.run.call_count, 1)
-        nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
-                      'num_deleted_files=4 num_files_transferred=5 ' \
-                      'total_size=6 transferred_size=7 literal_data=8 ' \
-                      'matched_data=9 list_size=10 ' \
-                      'list_generation_time=11.0 ' \
-                      'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
 
-        self.send_nsca.assert_called_with(
-            host_name=b'test1',
-            remote_host=b'1.2.3.4',
-            service_name=b'rsync_test1_tmp1_tmp2',
-            status=0,
-            text_output=nsca_output.encode(),
-            password=b'1234',
-            encryption_method=8
+    def test_rsync_args(self):
+        self.patch(['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'])
+        self.watch.run.assert_called_with(
+            ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
+             'tmp1', 'tmp2'],
         )
 
     def test_rsync_exception(self):
@@ -118,13 +83,53 @@ class TestIntegrationMock(TestCase):
                          'The rsync task fails with a non-zero exit code.')
 
 
-class TestOptionRsyncArgs(TestCase):
+class TestNsca(TestCase):
 
-    def test_rsync_args(self):
-        self.patch(['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'])
+    nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
+                    'num_deleted_files=4 num_files_transferred=5 ' \
+                    'total_size=6 transferred_size=7 literal_data=8 ' \
+                    'matched_data=9 list_size=10 ' \
+                    'list_generation_time=11.0 ' \
+                    'list_transfer_time=12.0 bytes_sent=13 bytes_received=14'
+
+    def test_nsca_without_password(self):
+        self.patch(
+            ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
+             'tmp2']
+        )
         self.watch.run.assert_called_with(
-            ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
-             'tmp1', 'tmp2'],
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+        )
+
+        self.send_nsca.assert_called_with(
+            host_name=b'test1',
+            remote_host=b'1.2.3.4',
+            service_name=b'rsync_test1_tmp1_tmp2',
+            status=0,
+            text_output=self.nsca_output.encode(),
+            password=None,
+            encryption_method=None
+        )
+
+    # --nsca-remote-host
+    # --nsca-password
+    # --nsca-encryption-method
+    def test_nsca_with_password(self):
+        self.patch(
+            ['--nsca-remote-host', '1.2.3.4', '--nsca-password', '1234',
+             '--nsca-encryption-method', '8',  '--host-name', 'test1', 'tmp1',
+             'tmp2']
+        )
+        self.assertEqual(self.watch.run.call_count, 1)
+
+        self.send_nsca.assert_called_with(
+            host_name=b'test1',
+            remote_host=b'1.2.3.4',
+            service_name=b'rsync_test1_tmp1_tmp2',
+            status=0,
+            text_output=self.nsca_output.encode(),
+            password=b'1234',
+            encryption_method=8
         )
 
 
