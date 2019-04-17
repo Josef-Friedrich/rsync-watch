@@ -73,30 +73,23 @@ total size is 22,083  speedup is 17.97
 '''
 
 
-def patch_mulitple(args, mocks_subprocess_run=[], mock_watch_run=None,
-                   watch_stdout=''):
+def patch_mulitple(args, mocks_subprocess_run=[], watch_run_stdout=OUTPUT1,
+                   watch_run_returncode=0):
     with patch('sys.argv',  ['cmd'] + list(args)), \
          patch('rsync_watch.send_nsca') as send_nsca, \
          patch('rsync_watch.subprocess.run') as subprocess_run, \
-         patch('rsync_watch.watch.run') as watch_run, \
+         patch('rsync_watch.watch') as watch, \
          Capturing(stream='stdout') as stdout, \
          Capturing(stream='stderr') as stderr:
 
-        if mock_watch_run:
-            watch_run.return_value = mock_watch_run
-        else:
-            watch_run.return_value = mock.Mock(returncode=0)
-
-        if watch_stdout:
-            watch_run.stdout.return_value = watch_stdout
-        else:
-            watch_run.stdout.return_value = OUTPUT1
-
+        watch.run.return_value.returncode = watch_run_returncode
+        watch.stdout = watch_run_stdout
         if mocks_subprocess_run:
             subprocess_run.side_effect = mocks_subprocess_run
+
         rsync_watch.main()
     return {
-        'watch_run': watch_run,
+        'watch': watch,
         'subprocess_run': subprocess_run,
         'send_nsca': send_nsca,
         'stdout': stdout,
@@ -223,14 +216,10 @@ class TestIntegrationMock(unittest.TestCase):
     def test_minimal(self):
         result = patch_mulitple(
             ['--nsca-remote-host', '1.2.3.4', '--host-name', 'test1', 'tmp1',
-             'tmp2'],
-            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+             'tmp2']
         )
-        result['subprocess_run'].assert_called_with(
+        result['watch'].run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8',
-            stderr=-2,
-            stdout=-1
         )
         nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
                       'num_deleted_files=4 num_files_transferred=5 ' \
@@ -263,10 +252,9 @@ class TestIntegrationMock(unittest.TestCase):
         result = patch_mulitple(
             ['--nsca-remote-host', '1.2.3.4', '--nsca-password', '1234',
              '--nsca-encryption-method', '8',  '--host-name', 'test1', 'tmp1',
-             'tmp2'],
-            [mock.Mock(stdout=OUTPUT1, returncode=0)]
+             'tmp2']
         )
-        self.assertEqual(result['subprocess_run'].call_count, 1)
+        self.assertEqual(result['watch'].run.call_count, 1)
         nsca_output = 'RSYNC OK | num_files=1 num_created_files=3 ' \
                       'num_deleted_files=4 num_files_transferred=5 ' \
                       'total_size=6 transferred_size=7 literal_data=8 ' \
@@ -289,12 +277,10 @@ class TestIntegrationMock(unittest.TestCase):
         result = patch_mulitple(
             ['--action-check-failed', 'exception', '--check-file', os.getcwd(),
              'tmp1', 'tmp2'],
-            [mock.Mock(stdout=OUTPUT1, returncode=0)]
         )
-        self.assertEqual(result['subprocess_run'].call_count, 1)
-        result['subprocess_run'].assert_any_call(
+        self.assertEqual(result['watch'].run.call_count, 1)
+        result['watch'].run.assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
         )
 
     def test_check_file_action_check_failed_fail(self):
@@ -316,7 +302,7 @@ class TestIntegrationMock(unittest.TestCase):
             patch_mulitple(
                 ['--action-check-failed', 'exception', '--check-ping',
                  '8.8.8.8', 'tmp1', 'tmp2'],
-                [mock.Mock(returncode=1), mock.Mock()]
+                [mock.Mock(returncode=1)]
             )
         self.assertEqual(str(exception.exception),
                          '--check-ping: \'8.8.8.8\' is not reachable.')
@@ -384,9 +370,8 @@ class TestIntegrationMock(unittest.TestCase):
             patch_mulitple(
                 ['--action-check-failed', 'exception', '--check-ssh-login',
                  'test@example.com', 'tmp1', 'tmp2'],
-                [
+                mocks_subprocess_run=[
                     mock.Mock(returncode=255),
-                    mock.Mock(stdout=OUTPUT1, returncode=0)
                 ]
             )
         self.assertEqual(
@@ -396,10 +381,7 @@ class TestIntegrationMock(unittest.TestCase):
 
     def test_rsync_exception(self):
         with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(
-                ['tmp1', 'tmp2'],
-                [mock.Mock(stdout=OUTPUT1, returncode=1)]
-            )
+            patch_mulitple(['tmp1', 'tmp2'], watch_run_returncode=1)
         self.assertEqual(str(exception.exception),
                          'The rsync task fails with a non-zero exit code.')
 
@@ -407,8 +389,9 @@ class TestIntegrationMock(unittest.TestCase):
         result = patch_mulitple(
             ['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'],
         )
-        result['watch_run'].assert_called_with(['rsync', '-av', '--delete',
-            '--stats', '--exclude', 'lol lol', 'tmp1', 'tmp2'],
+        result['watch'].run.assert_called_with(
+            ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
+             'tmp1', 'tmp2'],
         )
 
 
