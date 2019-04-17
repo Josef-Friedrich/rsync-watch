@@ -1,2 +1,3 @@
 Sphinx>=2.0.1
 sphinx-argparse
+rsync_watch
