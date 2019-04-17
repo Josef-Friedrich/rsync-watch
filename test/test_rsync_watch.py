@@ -13,7 +13,6 @@ from rsync_watch import \
 
 import rsync_watch
 from unittest.mock import patch
-from unittest import mock
 
 SCRIPT = 'rsync-watch.py'
 
@@ -272,127 +271,11 @@ class TestIntegrationMock(unittest.TestCase):
             encryption_method=8
         )
 
-    # --check-file
-    def test_check_file_action_check_failed_pass(self):
-        result = patch_mulitple(
-            ['--action-check-failed', 'exception', '--check-file', os.getcwd(),
-             'tmp1', 'tmp2'],
-        )
-        self.assertEqual(result['watch'].run.call_count, 1)
-        result['watch'].run.assert_any_call(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-        )
-
-    def test_check_file_action_check_failed_fail(self):
-        with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(
-                ['--action-check-failed', 'exception',
-                 '--check-file', '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4',
-                 'tmp1', 'tmp2']
-            )
-        self.assertEqual(
-            str(exception.exception),
-            '--check-file: The file \'/d2c75c94-78b8-4f09-9fc4-3779d020bbd4\' '
-            'doesn’t exist.'
-        )
-
-    # --check-ping
-    def test_check_ping_action_check_failed_fail(self):
-        with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(
-                ['--action-check-failed', 'exception', '--check-ping',
-                 '8.8.8.8', 'tmp1', 'tmp2'],
-                [mock.Mock(returncode=1)]
-            )
-        self.assertEqual(str(exception.exception),
-                         '--check-ping: \'8.8.8.8\' is not reachable.')
-
-    def test_check_ping_action_check_failed_pass(self):
-        result = patch_mulitple(
-            ['--action-check-failed', 'exception', '--check-ping', '8.8.8.8',
-             'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
-        )
-        self.assertEqual(result['subprocess_run'].call_count, 2)
-        result['subprocess_run'].assert_any_call(
-            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
-        )
-        result['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
-        )
-
-    def test_check_ping_no_exception_fail(self):
-        result = patch_mulitple(
-            ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=1), mock.Mock()]
-        )
-        self.assertEqual(result['subprocess_run'].call_count, 1)
-        result['subprocess_run'].assert_called_with(
-            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
-        )
-
-    def test_check_ping_no_exception_pass(self):
-        result = patch_mulitple(
-            ['--check-ping', '8.8.8.8', 'tmp1', 'tmp2'],
-            [mock.Mock(returncode=0), mock.Mock(stdout=OUTPUT1, returncode=0)]
-        )
-        self.assertEqual(result['subprocess_run'].call_count, 2)
-        result['subprocess_run'].assert_any_call(
-            ['ping', '-c', '3', '8.8.8.8'], stderr=-3, stdout=-3
-        )
-        result['subprocess_run'].assert_any_call(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
-        )
-
-    # --check-ssh-login
-    def test_check_ssh_login_action_check_failed_pass(self):
-        result = patch_mulitple(
-            ['--action-check-failed', 'exception', '--check-ssh-login',
-             'test@example.com', 'tmp1', 'tmp2'],
-            [
-                mock.Mock(returncode=0),
-                mock.Mock(stdout=OUTPUT1, returncode=0)
-            ]
-        )
-        subprocess_run = result['subprocess_run']
-        self.assertEqual(result['subprocess_run'].call_count, 2)
-        subprocess_run.assert_any_call(['ssh', 'test@example.com', 'ls'],
-                                       stderr=-3, stdout=-3)
-        subprocess_run.assert_any_call(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
-            encoding='utf-8', stderr=-2, stdout=-1
-        )
-
-    def test_check_ssh_login_action_check_failed_fail(self):
-        with self.assertRaises(RsyncWatchError) as exception:
-            patch_mulitple(
-                ['--action-check-failed', 'exception', '--check-ssh-login',
-                 'test@example.com', 'tmp1', 'tmp2'],
-                mocks_subprocess_run=[
-                    mock.Mock(returncode=255),
-                ]
-            )
-        self.assertEqual(
-            str(exception.exception),
-            '--check-ssh-login: \'test@example.com\' is not reachable.'
-        )
-
     def test_rsync_exception(self):
         with self.assertRaises(RsyncWatchError) as exception:
             patch_mulitple(['tmp1', 'tmp2'], watch_run_returncode=1)
         self.assertEqual(str(exception.exception),
                          'The rsync task fails with a non-zero exit code.')
-
-    def test_option_rsync_args(self):
-        result = patch_mulitple(
-            ['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'],
-        )
-        result['watch'].run.assert_called_with(
-            ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
-             'tmp1', 'tmp2'],
-        )
 
 
 class TestUnitFormatPerfData(unittest.TestCase):
