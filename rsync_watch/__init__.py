@@ -166,23 +166,22 @@ def parse_stats(stdout):
     """
     result = {}
 
-    # num_files
-    match = re.search(r'\nNumber of files: ([\d,]*)', stdout)
-    if match:
-        result['num_files'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError(
-            'Number of files: X,XXX (reg: X,XXX, dir: X,XXX)'
-        )
+    def search(regex, exception_msg):
+        match = re.search(regex, stdout)
+        if match:
+            return comma_int_to_int(match[1])
+        else:
+            raise StatsNotFoundError(exception_msg)
 
-    # num_created_files
-    match = re.search(r'\nNumber of created files: ([\d,]*)', stdout)
-    if match:
-        result['num_created_files'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError(
-            'Number of created files: X,XXX (reg: X,XXX, dir: X,XXX)'
-        )
+    result['num_files'] = search(
+        r'\nNumber of files: ([\d,]*)',
+        'Number of files: X,XXX (reg: X,XXX, dir: X,XXX)'
+    )
+
+    result['num_created_files'] = search(
+        r'\nNumber of created files: ([\d,]*)',
+        'Number of created files: X,XXX (reg: X,XXX, dir: X,XXX)',
+    )
 
     # num_deleted_files
     # This line is sometimes missing on rsync --version 3.1.2
@@ -193,49 +192,35 @@ def parse_stats(stdout):
     else:
         result['num_deleted_files'] = 0
 
-    # num_files_transferred
-    match = re.search(r'\nNumber of regular files transferred: ([\d,]*)\n',
-                      stdout)
-    if match:
-        result['num_files_transferred'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Number of regular files transferred: X,XXX')
+    result['num_files_transferred'] = search(
+        r'\nNumber of regular files transferred: ([\d,]*)\n',
+        'Number of regular files transferred: X,XXX',
+    )
 
-    # total_size
-    match = re.search(r'\nTotal file size: ([\d,]*) bytes\n', stdout)
-    if match:
-        result['total_size'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Total file size: X,XXX bytes')
+    result['total_size'] = search(
+        r'\nTotal file size: ([\d,]*) bytes\n',
+        'Total file size: X,XXX bytes',
+    )
 
-    # transferred_size
-    match = re.search(r'\nTotal transferred file size: ([\d,]*) bytes\n',
-                      stdout)
-    if match:
-        result['transferred_size'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Total transferred file size: X,XXX bytes')
+    result['transferred_size'] = search(
+        r'\nTotal transferred file size: ([\d,]*) bytes\n',
+        'Total transferred file size: X,XXX bytes',
+    )
 
-    # literal_data
-    match = re.search(r'\nLiteral data: ([\d,]*) bytes\n', stdout)
-    if match:
-        result['literal_data'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Literal data: X,XXX bytes')
+    result['literal_data'] = search(
+        r'\nLiteral data: ([\d,]*) bytes\n',
+        'Literal data: X,XXX bytes',
+    )
 
-    # matched_data
-    match = re.search(r'\nMatched data: ([\d,]*) bytes\n', stdout)
-    if match:
-        result['matched_data'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Matched data: X,XXX bytes')
+    result['matched_data'] = search(
+        r'\nMatched data: ([\d,]*) bytes\n',
+        'Matched data: X,XXX bytes',
+    )
 
-    # list_size
-    match = re.search(r'\nFile list size: ([\d,]*)\n', stdout)
-    if match:
-        result['list_size'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('File list size: X,XXX')
+    result['list_size'] = search(
+        r'\nFile list size: ([\d,]*)\n',
+        'File list size: X,XXX'
+    )
 
     # list_generation_time
     match = re.search(r'\nFile list generation time: ([\d\.]*) seconds\n',
@@ -253,19 +238,15 @@ def parse_stats(stdout):
     else:
         raise StatsNotFoundError('File list transfer time: X.XXX seconds')
 
-    # bytes_sent
-    match = re.search(r'\nTotal bytes sent: ([\d,]*)\n', stdout)
-    if match:
-        result['bytes_sent'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Total bytes sent: X,XXX')
+    result['bytes_sent'] = search(
+        r'\nTotal bytes sent: ([\d,]*)\n',
+        'Total bytes sent: X,XXX',
+    )
 
-    # bytes_received
-    match = re.search(r'\nTotal bytes received: ([\d,]*)\n', stdout)
-    if match:
-        result['bytes_received'] = comma_int_to_int(match[1])
-    else:
-        raise StatsNotFoundError('Total bytes received: X,XXX')
+    result['bytes_received'] = search(
+        r'\nTotal bytes received: ([\d,]*)\n',
+        'Total bytes received: X,XXX',
+    )
 
     return result
 
