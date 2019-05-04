@@ -28,18 +28,14 @@ total size is 0  speedup is 0.00
 class TestCase(unittest.TestCase):
 
     def setUp(self):
-        self.send_nsca = None
         self.subprocess_run = None
-        self.watch = None
         self.stdout = None
         self.stderr = None
 
     def patch(self, args, mocks_subprocess_run=[], watch_run_stdout=OUTPUT,
               watch_run_returncode=0):
         with patch('sys.argv',  ['cmd'] + list(args)), \
-             patch('rsync_watch.send_nsca') as self.send_nsca, \
              patch('rsync_watch.subprocess.run') as self.subprocess_run, \
-             patch('rsync_watch.watch') as self.watch, \
              Capturing(stream='stdout') as self.stdout, \
              Capturing(stream='stderr') as self.stderr:
 
@@ -77,7 +73,7 @@ class TestIntegrationMock(TestCase):
         )
 
     def test_rsync_exception(self):
-        with self.assertRaises(rsync_watch.RsyncWatchError) as exception:
+        with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(['tmp1', 'tmp2'], watch_run_returncode=1)
         self.assertEqual(str(exception.exception),
                          'The rsync task fails with a non-zero exit code.')
@@ -150,7 +146,7 @@ class TestOptionCheckSshLogin(TestCase):
         )
 
     def test_action_check_failed_fail(self):
-        with self.assertRaises(rsync_watch.RsyncWatchError) as exception:
+        with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 ['--action-check-failed', 'exception', '--check-ssh-login',
                  'test@example.com', 'tmp1', 'tmp2'],
@@ -167,7 +163,7 @@ class TestOptionCheckSshLogin(TestCase):
 class TestOptionCheckPing(TestCase):
 
     def test_action_check_failed_fail(self):
-        with self.assertRaises(rsync_watch.RsyncWatchError) as exception:
+        with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 ['--action-check-failed', 'exception', '--check-ping',
                  '8.8.8.8', 'tmp1', 'tmp2'],
@@ -227,7 +223,7 @@ class TestOptionCheckFile(TestCase):
         )
 
     def test_action_check_failed_fail(self):
-        with self.assertRaises(rsync_watch.RsyncWatchError) as exception:
+        with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 ['--action-check-failed', 'exception',
                  '--check-file', '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4',

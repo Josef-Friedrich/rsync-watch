@@ -1,15 +1,16 @@
 import unittest
+from unittest.mock import patch, Mock
 import subprocess
 import os
+
+import rsync_watch
 from rsync_watch import \
     Checks, \
-    format_performance_data, \
     parse_stats, \
     service_name, \
-    StatsNotFoundError, \
-    Nsca
+    StatsNotFoundError
 
-from unittest.mock import patch
+rsync_watch.watch = Mock()
 
 SCRIPT = 'rsync-watch.py'
 
@@ -69,35 +70,13 @@ total size is 22,083  speedup is 17.97
 '''
 
 
-class TestUnitClassNsca(unittest.TestCase):
-
-    def test_initialisation(self):
-        nsca = Nsca(host_name='host', service_name='service',
-                    remote_host='1.2.3.4', password='123', encryption_method=8)
-        self.assertEqual(nsca.host_name, b'host')
-        self.assertEqual(nsca.service_name, b'service')
-        self.assertEqual(nsca.remote_host, b'1.2.3.4')
-        self.assertEqual(nsca.password, b'123')
-        self.assertEqual(nsca.encryption_method, 8)
-
-    def test_method_send(self):
-        nsca = Nsca(host_name='host', service_name='service',
-                    remote_host='1.2.3.4', password='123', encryption_method=8)
-        with patch('rsync_watch.send_nsca') as send_nsca:
-            nsca.send(0, 'test')
-        send_nsca.assert_called_with(
-            encryption_method=8, host_name=b'host', password=b'123',
-            remote_host=b'1.2.3.4', service_name=b'service', status=0,
-            text_output=b'test'
-        )
-
-
 class TestUnitParseStats(unittest.TestCase):
 
     def test_empty_string(self):
-        with self.assertRaises(StatsNotFoundError) as exception:
+        with self.assertRaises(StatsNotFoundError) as context, \
+             patch('rsync_watch.watch'):
             parse_stats('')
-        self.assertEqual(str(exception.exception),
+        self.assertEqual(str(context.exception),
                          'Number of files: X,XXX (reg: X,XXX, dir: X,XXX)')
 
     def test_output1(self):
@@ -183,45 +162,38 @@ class TestUnitServiceName(unittest.TestCase):
         )
 
 
-class TestUnitFormatPerfData(unittest.TestCase):
-
-    def test_integer(self):
-        self.assertEqual(format_performance_data({'test': 1}), 'test=1')
-
-    def test_float(self):
-        self.assertEqual(format_performance_data({'test': 1.001}),
-                         'test=1.001')
-
-
 class TestUnitClassChecks(unittest.TestCase):
 
+    def get_checks(self, raise_exception):
+        return Checks(raise_exception=True)
+
     def test_initialisation_raise_exception_true(self):
-        checks = Checks(raise_exception=True)
+        checks = self.get_checks(raise_exception=True)
         self.assertEqual(checks.raise_exception, True)
         self.assertEqual(checks.messages, '')
         self.assertEqual(checks.passed, True)
 
     def test_initialisation_raise_exception_false(self):
-        checks = Checks(raise_exception=False)
+        checks = self.get_checks(raise_exception=False)
         self.assertEqual(checks.raise_exception, False)
 
     def test_method_have_passed_true(self):
-        checks = Checks(raise_exception=False)
+        checks = self.get_checks(raise_exception=False)
         self.assertEqual(checks.have_passed(), True)
 
     def test_method_have_passed_false(self):
-        checks = Checks(raise_exception=False)
+        checks = self.get_checks(raise_exception=False)
         checks._log_fail('test')
         self.assertEqual(checks.have_passed(), False)
 
     def test_method_check_file_pass(self):
-        checks = Checks(raise_exception=False)
+        checks = self.get_checks(raise_exception=False)
         checks.check_file(os.getcwd())
         self.assertEqual(checks.have_passed(), True)
         self.assertEqual(checks.messages, '')
 
     def test_method_check_file_fail(self):
-        checks = Checks(raise_exception=False)
+        checks = self.get_checks(raise_exception=False)
         checks.check_file('/d2c75c94-78b8-4f09-9fc4-3779d020bbd4')
         self.assertEqual(checks.have_passed(), False)
         self.assertEqual(

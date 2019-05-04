@@ -7,42 +7,14 @@ import shlex
 import socket
 import subprocess
 
-from jflib import Watch
+from jflib import Watch, ConfigReader
+from jflib.command_watcher import CommandWatcherError
 from rsync_watch._version import get_versions
-from rsync_watch.nsca import send_nsca
 
 __version__ = get_versions()['version']
 
-watch = Watch()
 
-
-class NscaInterface:
-    """Class that should be overloaded by the Nsca() class. To provide a
-    stable interface. The class Nsca() needs many configuration values which
-    are not always available."""
-
-    def send_nsca(self, *args):
-        pass
-
-
-nsca = NscaInterface()
-"""Global instance of the Nsca() class."""
-
-
-class RsyncWatchError(Exception):
-    """Base exception for this script."""
-
-    def __init__(self, msg):
-        nsca.send(
-            status=2,
-            text_output='{}: {}'.format(
-                self.__class__.__name__,
-                msg,
-            )
-        )
-
-
-class StatsNotFoundError(RsyncWatchError):
+class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
 
 
@@ -102,6 +74,19 @@ def parse_args():
              'or “root@example.com” or “example.com”.'
     )
 
+    # email
+
+    email = parser.add_argument_group(
+        title='email',
+    )
+
+    email.add_argument('--email-subject-prefix')
+    email.add_argument('--email-from-addr')
+    email.add_argument('--email-to-addr')
+    email.add_argument('--email-smtp-login')
+    email.add_argument('--email-smtp-password')
+    email.add_argument('--email-smtp-server')
+
     # nsca
 
     nsca = parser.add_argument_group(
@@ -123,6 +108,12 @@ def parse_args():
         '--nsca-encryption-method',
         help='The NSCA encryption method. The supported encryption methods '
              'are: 0 1 2 3 4 8 11 14 15 16'
+    )
+
+    nsca.add_argument(
+        '--nsca-port',
+        help='The NSCA port.',
+        default=5667
     )
 
     parser.add_argument(
@@ -251,20 +242,6 @@ def parse_stats(stdout):
     return result
 
 
-def format_performance_data(stats):
-    """
-    :param dict stats: A dictionary containing the performance data.
-
-    :return: A concatenated string
-    :rtype: string
-    """
-    pairs = []
-    for key, value in stats.items():
-        pairs.append('{}={}'.format(key, value))
-
-    return ' '.join(pairs)
-
-
 def service_name(host_name, src, dest):
     """Format a service name to use as a Nagios or Icinga service name.
 
@@ -370,47 +347,8 @@ class Checks:
         :return: True in fall checks have passed else false.
         :rtype: boolean"""
         if self.raise_exception and not self.passed:
-            raise RsyncWatchError(self.messages)
+            raise CommandWatcherError(self.messages)
         return self.passed
-
-
-class Nsca:
-    """Send NSCA messages to a monitoring server. Wrapper to setup to various
-    informations for the monitoring process.
-    """
-
-    def __init__(self, host_name, service_name, remote_host, password=None,
-                 encryption_method=None):
-        self.host_name = host_name.encode()
-
-        self.service_name = service_name.encode()
-
-        self.remote_host = None
-        if remote_host:
-            self.remote_host = remote_host.encode()
-
-        self.encryption_method = None
-        if encryption_method:
-            self.encryption_method = int(encryption_method)
-
-        self.password = None
-        if password:
-            self.password = password.encode()
-
-    def send(self, status, text_output):
-        """Send a NSCA message to a monitoring server."""
-        watch.log.info('NSCA status: {}'.format(status))
-        watch.log.info('NSCA text output: {}'.format(text_output))
-        if self.remote_host:
-            send_nsca(
-                status=int(status),
-                host_name=self.host_name,
-                service_name=self.service_name,
-                text_output=text_output.encode(),
-                remote_host=self.remote_host,
-                password=self.password,
-                encryption_method=self.encryption_method
-            )
 
 
 def main():
@@ -423,13 +361,17 @@ def main():
         host_name = args.host_name
 
     service = service_name(host_name, args.src, args.dest)
-    watch.log.info('Service name: {}'.format(service))
 
-    global nsca
-    nsca = Nsca(host_name=host_name, service_name=service,
-                remote_host=args.nsca_remote_host,
-                password=args.nsca_password,
-                encryption_method=args.nsca_encryption_method)
+    global watch
+    watch = Watch(
+        service_name=service,
+        config_reader = ConfigReader(
+            argparse=(args, {}),
+            ini='/etc/command-watcher.ini',
+        ),
+    )
+
+    watch.log.info('Service name: {}'.format(service))
 
     raise_exception = False
     if args.action_check_failed == 'exception':
@@ -443,7 +385,7 @@ def main():
         checks.check_ssh_login(args.check_ssh_login)
 
     if not checks.have_passed():
-        nsca.send(status=1, text_output=checks.messages)
+        watch.report(status=1, custom_output=checks.messages)
         watch.log.info(checks.messages)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
@@ -456,17 +398,8 @@ def main():
         watch.log.info('Rsync command: {}'.format(' '.join(rsync_command)))
 
         process = watch.run(rsync_command)
-
-        if process.returncode != 0:
-            msg = 'The rsync task fails with a non-zero exit code.'
-            raise RsyncWatchError(msg)
-
-        stats = parse_stats(watch.stdout)
-        text_output = 'RSYNC OK | {}'.format(
-            format_performance_data(stats)
-        )
-
-        nsca.send(status=0, text_output=text_output)
+        stats = parse_stats(process.stdout)
+        watch.report(status=0, performance_data=stats)
 
 
 if __name__ == "__main__":

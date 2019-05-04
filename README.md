@@ -20,9 +20,16 @@ usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--rsync-args RSYNC_ARGS]
                       [--action-check-failed {exception,skip}]
                       [--check-file FILE_PATH] [--check-ping DESTINATION]
                       [--check-ssh-login SSH_LOGIN]
+                      [--email-subject-prefix EMAIL_SUBJECT_PREFIX]
+                      [--email-from-addr EMAIL_FROM_ADDR]
+                      [--email-to-addr EMAIL_TO_ADDR]
+                      [--email-smtp-login EMAIL_SMTP_LOGIN]
+                      [--email-smtp-password EMAIL_SMTP_PASSWORD]
+                      [--email-smtp-server EMAIL_SMTP_SERVER]
                       [--nsca-remote-host NSCA_REMOTE_HOST]
                       [--nsca-password NSCA_PASSWORD]
-                      [--nsca-encryption-method NSCA_ENCRYPTION_METHOD] [-v]
+                      [--nsca-encryption-method NSCA_ENCRYPTION_METHOD]
+                      [--nsca-port NSCA_PORT] [-v]
                       src dest
 
 A Python script to monitor the execution of a rsync task.
@@ -57,6 +64,14 @@ checks:
                         by SSHing into it. SSH_LOGIN: “root@192.168.1.1” or
                         “root@example.com” or “example.com”.
 
+email:
+  --email-subject-prefix EMAIL_SUBJECT_PREFIX
+  --email-from-addr EMAIL_FROM_ADDR
+  --email-to-addr EMAIL_TO_ADDR
+  --email-smtp-login EMAIL_SMTP_LOGIN
+  --email-smtp-password EMAIL_SMTP_PASSWORD
+  --email-smtp-server EMAIL_SMTP_SERVER
+
 nsca:
   Send status messages to the monitoring.
 
@@ -67,5 +82,7 @@ nsca:
   --nsca-encryption-method NSCA_ENCRYPTION_METHOD
                         The NSCA encryption method. The supported encryption
                         methods are: 0 1 2 3 4 8 11 14 15 16
+  --nsca-port NSCA_PORT
+                        The NSCA port.
 
 ```
