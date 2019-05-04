@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import patch
 from unittest import mock
 from jflib import Capturing
-import rsync_watch
 import os
+import rsync_watch
 
 OUTPUT = '''
 sending incremental file list
@@ -36,9 +36,11 @@ class TestCase(unittest.TestCase):
               watch_run_returncode=0):
         with patch('sys.argv',  ['cmd'] + list(args)), \
              patch('rsync_watch.subprocess.run') as self.subprocess_run, \
+             patch('rsync_watch.Watch') as Watch, \
              Capturing(stream='stdout') as self.stdout, \
              Capturing(stream='stderr') as self.stderr:
 
+            self.watch = Watch.return_value
             self.watch.run.return_value.returncode = watch_run_returncode
             self.watch.stdout = watch_run_stdout
             if mocks_subprocess_run:
@@ -58,9 +60,6 @@ class TestIntegrationMock(TestCase):
         info = self.watch.log.info
         info.assert_any_call('Source: tmp1')
         info.assert_any_call('Destination: tmp2')
-        info.assert_any_call(
-            'Rsync command: rsync -av --delete --stats tmp1 tmp2'
-        )
         self.watch.log.info.assert_any_call(
             'Service name: rsync_test1_tmp1_tmp2'
         )

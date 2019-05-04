@@ -365,7 +365,7 @@ def main():
     global watch
     watch = Watch(
         service_name=service,
-        config_reader = ConfigReader(
+        config_reader=ConfigReader(
             argparse=(args, {}),
             ini='/etc/command-watcher.ini',
         ),
@@ -395,10 +395,9 @@ def main():
 
         watch.log.info('Source: {}'.format(args.src))
         watch.log.info('Destination: {}'.format(args.dest))
-        watch.log.info('Rsync command: {}'.format(' '.join(rsync_command)))
 
-        process = watch.run(rsync_command)
-        stats = parse_stats(process.stdout)
+        watch.run(rsync_command)
+        stats = parse_stats(watch.stdout)
         watch.report(status=0, performance_data=stats)
 
 
