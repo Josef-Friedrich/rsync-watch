@@ -163,7 +163,7 @@ class TestUnitServiceName(unittest.TestCase):
 class TestUnitClassChecks(unittest.TestCase):
 
     def get_checks(self, raise_exception):
-        return Checks(raise_exception=True)
+        return Checks(raise_exception=raise_exception)
 
     def test_initialisation_raise_exception_true(self):
         checks = self.get_checks(raise_exception=True)
