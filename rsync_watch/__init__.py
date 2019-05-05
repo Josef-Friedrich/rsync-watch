@@ -7,6 +7,8 @@ import shlex
 import socket
 import subprocess
 
+from jflib import command_watcher
+
 from jflib import Watch, ConfigReader
 from jflib.command_watcher import CommandWatcherError
 from rsync_watch._version import get_versions
@@ -18,7 +20,7 @@ class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
 
 
-def parse_args():
+def get_argparser():
     """
     :return: A `ArgumentParse` object.
     :rtype: object
@@ -72,48 +74,6 @@ def parse_args():
         help='Check if a remote host is reachable over the network by SSHing '
              'into it. SSH_LOGIN: “root@192.168.1.1” '
              'or “root@example.com” or “example.com”.'
-    )
-
-    # email
-
-    email = parser.add_argument_group(
-        title='email',
-    )
-
-    email.add_argument('--email-subject-prefix')
-    email.add_argument('--email-from-addr')
-    email.add_argument('--email-to-addr')
-    email.add_argument('--email-smtp-login')
-    email.add_argument('--email-smtp-password')
-    email.add_argument('--email-smtp-server')
-
-    # nsca
-
-    nsca = parser.add_argument_group(
-        title='nsca',
-        description='Send status messages to the monitoring.'
-    )
-
-    nsca.add_argument(
-        '--nsca-remote-host',
-        help='IP address of the NSCA remote host.'
-    )
-
-    nsca.add_argument(
-        '--nsca-password',
-        help='The NSCA password.'
-    )
-
-    nsca.add_argument(
-        '--nsca-encryption-method',
-        help='The NSCA encryption method. The supported encryption methods '
-             'are: 0 1 2 3 4 8 11 14 15 16'
-    )
-
-    nsca.add_argument(
-        '--nsca-port',
-        help='The NSCA port.',
-        default=5667
     )
 
     parser.add_argument(
@@ -353,7 +313,15 @@ class Checks:
 
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
-    args = parse_args().parse_args()
+    # To generate the argparser we use a not fully configured ConfigReader
+    # We need args for the configs
+    # We get the service name for args
+    # A typical chicken-egg-situation.
+    config_reader = ConfigReader(spec=command_watcher.CONFIG_READER_SPEC)
+    parser = get_argparser()
+    config_reader.spec_to_argparse(parser)
+    args = parser.parse_args()
+    del config_reader
 
     if not args.host_name:
         host_name = socket.gethostname()
@@ -366,6 +334,7 @@ def main():
     watch = Watch(
         service_name=service,
         config_reader=ConfigReader(
+            spec=command_watcher.CONFIG_READER_SPEC,
             argparse=(args, {}),
             ini='/etc/command-watcher.ini',
         ),
