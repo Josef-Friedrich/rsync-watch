@@ -330,15 +330,20 @@ def main():
 
     service = service_name(host_name, args.src, args.dest)
 
-    global watch
-    watch = Watch(
-        service_name=service,
-        config_reader=ConfigReader(
+    ini_file = os.path.join('/', 'etc', 'command-watcher.ini')
+    if os.path.exists(ini_file):
+        config_reader = ConfigReader(
             spec=command_watcher.CONFIG_READER_SPEC,
             argparse=(args, {}),
-            ini='/etc/command-watcher.ini',
-        ),
-    )
+            ini=ini_file,
+        )
+    else:
+        config_reader = ConfigReader(
+            spec=command_watcher.CONFIG_READER_SPEC,
+            argparse=(args, {}),
+        )
+    global watch
+    watch = Watch(service_name=service, config_reader=config_reader)
 
     watch.log.info('Service name: {}'.format(service))
 
