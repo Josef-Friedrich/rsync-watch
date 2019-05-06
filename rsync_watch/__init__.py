@@ -334,8 +334,8 @@ def main():
     if os.path.exists(ini_file):
         config_reader = ConfigReader(
             spec=command_watcher.CONFIG_READER_SPEC,
+            argparse=args,
             ini=ini_file,
-            argparse=(args, {}),
         )
     else:
         config_reader = ConfigReader(
