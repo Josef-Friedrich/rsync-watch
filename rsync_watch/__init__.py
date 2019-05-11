@@ -120,7 +120,7 @@ def parse_stats(stdout):
     def search(regex, exception_msg):
         match = re.search(regex, stdout)
         if match:
-            return comma_int_to_int(match[1])
+            return comma_int_to_int(match.group(1))
         else:
             raise StatsNotFoundError(exception_msg)
 
@@ -139,7 +139,7 @@ def parse_stats(stdout):
     # raise no error
     match = re.search(r'\nNumber of deleted files: ([\d,]*)', stdout)
     if match:
-        result['num_deleted_files'] = comma_int_to_int(match[1])
+        result['num_deleted_files'] = comma_int_to_int(match.group(1))
     else:
         result['num_deleted_files'] = 0
 
@@ -177,7 +177,7 @@ def parse_stats(stdout):
     match = re.search(r'\nFile list generation time: ([\d\.]*) seconds\n',
                       stdout)
     if match:
-        result['list_generation_time'] = float(match[1])
+        result['list_generation_time'] = float(match.group(1))
     else:
         raise StatsNotFoundError('File list generation time: X.XXX seconds')
 
@@ -185,7 +185,7 @@ def parse_stats(stdout):
     match = re.search(r'\nFile list transfer time: ([\d\.]*) seconds\n',
                       stdout)
     if match:
-        result['list_transfer_time'] = float(match[1])
+        result['list_transfer_time'] = float(match.group(1))
     else:
         raise StatsNotFoundError('File list transfer time: X.XXX seconds')
 
