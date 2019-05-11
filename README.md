@@ -22,6 +22,7 @@ usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--rsync-args RSYNC_ARGS]
                       [--check-ssh-login SSH_LOGIN] [-v]
                       [--email-from-addr EMAIL_FROM_ADDR]
                       [--email-to-addr EMAIL_TO_ADDR]
+                      [--email-to-addr-critical EMAIL_TO_ADDR_CRITICAL]
                       [--email-smtp-login EMAIL_SMTP_LOGIN]
                       [--email-smtp-password EMAIL_SMTP_PASSWORD]
                       [--email-smtp-server EMAIL_SMTP_SERVER]
@@ -70,6 +71,9 @@ email:
                         The email address of the sender.
   --email-to-addr EMAIL_TO_ADDR
                         The email address of the recipient.
+  --email-to-addr-critical EMAIL_TO_ADDR_CRITICAL
+                        The email address of the recipient to send critical
+                        messages to.
   --email-smtp-login EMAIL_SMTP_LOGIN
                         The SMTP login name.
   --email-smtp-password EMAIL_SMTP_PASSWORD

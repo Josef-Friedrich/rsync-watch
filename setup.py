@@ -32,7 +32,7 @@ setup(
         'Tracker': 'https://github.com/Josef-Friedrich/rsync-watch/issues',
     },
     url='https://github.com/Josef-Friedrich/rsync-watch',
-    python_requires='>=3.6',
+    python_requires='>=3.5',
     packages=find_packages(),
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
