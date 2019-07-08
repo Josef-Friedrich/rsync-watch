@@ -55,6 +55,7 @@ class TestIntegrationMock(TestCase):
         self.patch(['--host-name', 'test1', 'tmp1', 'tmp2'])
         self.watch.run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24],
         )
 
         info = self.watch.log.info
@@ -68,7 +69,7 @@ class TestIntegrationMock(TestCase):
         self.patch(['--rsync-args', '--exclude "lol lol"', 'tmp1', 'tmp2'])
         self.watch.run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', '--exclude', 'lol lol',
-             'tmp1', 'tmp2'],
+             'tmp1', 'tmp2'], ignore_exceptions=[24],
         )
 
 
@@ -85,7 +86,8 @@ class TestOptionCheckSshLogin(TestCase):
             ['ssh', 'test@example.com', 'ls'], stderr=-3, stdout=-3
         )
         self.watch.run.assert_called_with(
-            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2']
+            ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
         )
 
     def test_action_check_failed_fail(self):
@@ -127,6 +129,7 @@ class TestOptionCheckPing(TestCase):
         )
         self.watch.run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
         )
 
     def test_no_exception_fail(self):
@@ -150,6 +153,7 @@ class TestOptionCheckPing(TestCase):
         )
         self.watch.run.assert_called_with(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
         )
 
 
@@ -163,6 +167,7 @@ class TestOptionCheckFile(TestCase):
         self.assertEqual(self.watch.run.call_count, 1)
         self.watch.run.assert_any_call(
             ['rsync', '-av', '--delete', '--stats', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
         )
 
     def test_action_check_failed_fail(self):
