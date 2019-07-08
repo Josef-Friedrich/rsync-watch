@@ -182,34 +182,3 @@ class TestOptionCheckFile(TestCase):
             '--check-file: The file \'/d2c75c94-78b8-4f09-9fc4-3779d020bbd4\' '
             'doesn’t exist.'
         )
-
-
-class TestOptionBeep(TestCase):
-
-    def test_success_beep(self):
-        self.patch(['--beep', 'tmp1', 'tmp2'])
-        self.subprocess_run.assert_called_with(
-            ['beep', '-f', '4186.01', '-l', '40.0'],
-        )
-
-    def test_success_no_beep(self):
-        self.patch(['tmp1', 'tmp2'])
-        self.subprocess_run.assert_not_called()
-
-    def test_check_skip_beep(self):
-        self.patch(
-            ['--beep', '--action-check-failed', 'skip',
-             '--check-file', '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4',
-             'tmp1', 'tmp2']
-        )
-        self.subprocess_run.assert_called_with(
-            ['beep', '-f', '65.4064', '-l', '100.0'],
-        )
-
-    def test_check_skip_no_beep(self):
-        self.patch(
-            ['--action-check-failed', 'skip',
-             '--check-file', '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4',
-             'tmp1', 'tmp2']
-        )
-        self.subprocess_run.assert_not_called()

@@ -16,8 +16,7 @@ A Python script to monitor the execution of a rsync task.
   checks before starting the rsync process.
 
 ```
-usage: rsync-watch.py [-h] [--beep] [--host-name HOST_NAME]
-                      [--rsync-args RSYNC_ARGS]
+usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--rsync-args RSYNC_ARGS]
                       [--action-check-failed {exception,skip}]
                       [--check-file FILE_PATH] [--check-ping DESTINATION]
                       [--check-ssh-login SSH_LOGIN] [-v]
@@ -42,7 +41,6 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --beep                Give auditive feedback by using the “beep” command.
   --host-name HOST_NAME
                         The hostname to submit over NSCA to the monitoring.
   --rsync-args RSYNC_ARGS
