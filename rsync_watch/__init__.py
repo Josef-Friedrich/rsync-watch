@@ -30,6 +30,12 @@ def get_argparser():
     )
 
     parser.add_argument(
+        '--beep',
+        help='Give auditive feedback by using the “beep” command.',
+        action='store_true',
+    )
+
+    parser.add_argument(
         '--host-name',
         help='The hostname to submit over NSCA to the monitoring.',
     )
@@ -311,11 +317,25 @@ class Checks:
         return self.passed
 
 
+def beep(frequency=4186.01, length=40):
+    """
+    Generate a beep sound using the “beep” command.
+
+    * A success tone: frequency=4186.01, length=40
+    * A failure tone: frequency=65.4064, length=100
+
+    :param float frequency: Frequency in Hz.
+    :param float length: Length in milliseconds.
+    """
+    subprocess.run(['beep', '-f', str(float(frequency)), '-l',
+                    str(float(length))])
+
+
 def main():
     """Main function. Gets called by `entry_points` `console_scripts`."""
-    # To generate the argparser we use a not fully configured ConfigReader
-    # We need args for the configs
-    # We get the service name for args
+    # To generate the argparser we use a not fully configured ConfigReader.
+    # We need `args` for the configs.
+    # We get the service name from the args.
     # A typical chicken-egg-situation.
     config_reader = ConfigReader(spec=command_watcher.CONFIG_READER_SPEC)
     parser = get_argparser()
@@ -361,6 +381,8 @@ def main():
     if not checks.have_passed():
         watch.report(status=1, custom_output=checks.messages)
         watch.log.info(checks.messages)
+        if args.beep:
+            beep(frequency=65.4064, length=100)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
         if args.rsync_args:
@@ -374,6 +396,9 @@ def main():
         stats = parse_stats(watch.stdout)
         watch.report(status=0, performance_data=stats)
         watch.log.debug(stats)
+
+        if args.beep:
+            beep()
 
 
 if __name__ == "__main__":
