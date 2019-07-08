@@ -45,7 +45,7 @@ setup(
     install_requires=[
         'pycrypto>=2.0',
         'six',
-        'jflib>=0.4.1',
+        'jflib>=0.4.2',
     ],
     entry_points={
         'console_scripts': [
