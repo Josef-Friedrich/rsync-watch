@@ -33,6 +33,12 @@ def get_argparser():
         '--host-name',
         help='The hostname to submit over NSCA to the monitoring.',
     )
+    
+    parser.add_argument(
+        '--dest-user-group',
+        metavar='USERNAME',
+        help='The hostname to submit over NSCA to the monitoring.',
+    )
 
     parser.add_argument(
         '--rsync-args',
@@ -363,6 +369,8 @@ def main():
         watch.log.info(checks.messages)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
+        # https://stackoverflow.com/a/62982981
+        # --usermap="\*:smb" --groupmap="\*:smb"
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
         rsync_command += [args.src, args.dest]
