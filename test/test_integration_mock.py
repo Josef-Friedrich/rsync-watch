@@ -35,10 +35,10 @@ class TestCase(unittest.TestCase):
     def patch(self, args, mocks_subprocess_run=[], watch_run_stdout=OUTPUT,
               watch_run_returncode=0):
         with patch('sys.argv',  ['cmd'] + list(args)), \
-             patch('rsync_watch.subprocess.run') as self.subprocess_run, \
-             patch('rsync_watch.Watch') as Watch, \
-             Capturing(stream='stdout') as self.stdout, \
-             Capturing(stream='stderr') as self.stderr:
+                patch('rsync_watch.subprocess.run') as self.subprocess_run, \
+                patch('rsync_watch.Watch') as Watch, \
+                Capturing(stream='stdout') as self.stdout, \
+                Capturing(stream='stderr') as self.stderr:
 
             self.watch = Watch.return_value
             self.watch.run.return_value.returncode = watch_run_returncode
@@ -186,14 +186,20 @@ class TestOptionCheckFile(TestCase):
 
 class TestOptionDestUserGroup(TestCase):
 
-    def test_action_check_failed_pass(self):
-        self.patch(
-            ['--dest-user-group=jf',
-             'tmp1', 'tmp2'],
+    def test_dest_local(self):
+        self.patch(['--dest-user-group=jf', 'tmp1', 'tmp2'])
+        self.assertEqual(self.watch.run.call_count, 1)
+        self.watch.run.assert_any_call(
+            ['rsync', '-av', '--delete', '--stats', '--usermap=*:jf',
+             '--groupmap=*:jf', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
         )
+
+    def test_dest_remote(self):
+        self.patch(['--dest-user-group=jf', 'tmp1', 'remote:tmp2'])
         self.assertEqual(self.watch.run.call_count, 1)
         self.watch.run.assert_any_call(
             ['rsync', '-av', '--delete', '--stats', '--usermap=\\*:jf',
-             '--groupmap=\\*:jf', 'tmp1', 'tmp2'],
+             '--groupmap=\\*:jf', 'tmp1', 'remote:tmp2'],
             ignore_exceptions=[24]
         )

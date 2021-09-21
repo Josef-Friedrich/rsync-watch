@@ -372,11 +372,14 @@ def main():
         rsync_command = ['rsync', '-av', '--delete', '--stats']
 
         if args.dest_user_group:
+            # https://stackoverflow.com/a/62982981
+            # zsh:1: no matches found: --usermap=*:smb
+            escape_star = ''
+            if ':' in args.dest:
+                escape_star = '\\'
             rsync_command += [
-                # https://stackoverflow.com/a/62982981
-                # zsh:1: no matches found: --usermap=*:smb
-                '--usermap=\\*:{}'.format(args.dest_user_group),
-                '--groupmap=\\*:{}'.format(args.dest_user_group)
+                '--usermap={}*:{}'.format(escape_star, args.dest_user_group),
+                '--groupmap={}*:{}'.format(escape_star, args.dest_user_group)
             ]
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
