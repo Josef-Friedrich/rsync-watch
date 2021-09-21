@@ -374,8 +374,9 @@ def main():
         if args.dest_user_group:
             rsync_command += [
                 # https://stackoverflow.com/a/62982981
-                '--usermap=*:{}'.format(args.dest_user_group),
-                '--groupmap=*:{}'.format(args.dest_user_group)
+                # zsh:1: no matches found: --usermap=*:smb
+                '--usermap=\\*:{}'.format(args.dest_user_group),
+                '--groupmap=\\*:{}'.format(args.dest_user_group)
             ]
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
