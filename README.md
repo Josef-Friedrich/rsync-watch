@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/Josef-Friedrich/rsync-watch.svg?branch=master)](https://travis-ci.org/Josef-Friedrich/rsync-watch)
 [![pypi.org](http://img.shields.io/pypi/v/rsync_watch.svg)](https://pypi.python.org/pypi/rsync_watch)
 [![Documentation Status](https://readthedocs.org/projects/rsync-watch/badge/?version=latest)](https://rsync-watch.readthedocs.io/en/latest/?badge=latest)
 
@@ -16,7 +15,9 @@ A Python script to monitor the execution of a rsync task.
   checks before starting the rsync process.
 
 ```
-usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--rsync-args RSYNC_ARGS]
+usage: rsync-watch.py [-h] [--host-name HOST_NAME]
+                      [--dest-user-group USER_GROUP_NAME]
+                      [--rsync-args RSYNC_ARGS]
                       [--action-check-failed {exception,skip}]
                       [--check-file FILE_PATH] [--check-ping DESTINATION]
                       [--check-ssh-login SSH_LOGIN] [-v]
@@ -43,6 +44,9 @@ optional arguments:
   -h, --help            show this help message and exit
   --host-name HOST_NAME
                         The hostname to submit over NSCA to the monitoring.
+  --dest-user-group USER_GROUP_NAME
+                        Both the user name and the group name of the
+                        destination will be set to this name.
   --rsync-args RSYNC_ARGS
                         Rsync CLI arguments. Insert some rsync command line
                         arguments.Wrap all arguments in one string, for

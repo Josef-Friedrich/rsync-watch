@@ -33,11 +33,12 @@ def get_argparser():
         '--host-name',
         help='The hostname to submit over NSCA to the monitoring.',
     )
-    
+
     parser.add_argument(
         '--dest-user-group',
-        metavar='USERNAME',
-        help='The hostname to submit over NSCA to the monitoring.',
+        metavar='USER_GROUP_NAME',
+        help='Both the user name and the group name of the destination will '
+        'be set to this name.',
     )
 
     parser.add_argument(
@@ -305,7 +306,7 @@ class Checks:
             )
         else:
             watch.log.info(
-                '--check-ssh-login: \'{}\' is not reachable.'.format(ssh_host)
+                '--check-ssh-login: \'{}\' is reachable.'.format(ssh_host)
             )
 
     def have_passed(self):
@@ -369,8 +370,13 @@ def main():
         watch.log.info(checks.messages)
     else:
         rsync_command = ['rsync', '-av', '--delete', '--stats']
-        # https://stackoverflow.com/a/62982981
-        # --usermap="\*:smb" --groupmap="\*:smb"
+
+        if args.dest_user_group:
+            rsync_command += [
+                # https://stackoverflow.com/a/62982981
+                '--usermap=*:{}'.format(args.dest_user_group),
+                '--groupmap=*:{}'.format(args.dest_user_group)
+            ]
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
         rsync_command += [args.src, args.dest]

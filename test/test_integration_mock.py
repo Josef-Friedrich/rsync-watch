@@ -182,3 +182,18 @@ class TestOptionCheckFile(TestCase):
             '--check-file: The file \'/d2c75c94-78b8-4f09-9fc4-3779d020bbd4\' '
             'doesn’t exist.'
         )
+
+
+class TestOptionDestUserGroup(TestCase):
+
+    def test_action_check_failed_pass(self):
+        self.patch(
+            ['--dest-user-group=jf',
+             'tmp1', 'tmp2'],
+        )
+        self.assertEqual(self.watch.run.call_count, 1)
+        self.watch.run.assert_any_call(
+            ['rsync', '-av', '--delete', '--stats', '--usermap=*:jf',
+             '--groupmap=*:jf', 'tmp1', 'tmp2'],
+            ignore_exceptions=[24]
+        )
