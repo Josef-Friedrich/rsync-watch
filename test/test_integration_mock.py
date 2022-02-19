@@ -32,8 +32,9 @@ class TestCase(unittest.TestCase):
         self.stdout = None
         self.stderr = None
 
-    def patch(self, args, mocks_subprocess_run=[], watch_run_stdout=OUTPUT,
-              watch_run_returncode=0):
+    def patch(self, args: list[str], mocks_subprocess_run: list[mock.Mock]=[],
+              watch_run_stdout: str = OUTPUT,
+              watch_run_returncode: int = 0):
         with patch('sys.argv',  ['cmd'] + list(args)), \
                 patch('rsync_watch.subprocess.run') as self.subprocess_run, \
                 patch('rsync_watch.Watch') as Watch, \
