@@ -20,7 +20,7 @@ class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
 
 
-def get_argparser():
+def get_argparser() -> argparse.ArgumentParser:
     """
     :return: A `ArgumentParse` object.
     :rtype: object
@@ -103,24 +103,22 @@ def get_argparser():
     return parser
 
 
-def comma_int_to_int(comma_integer):
+def comma_int_to_int(comma_integer: str) -> int:
     """Convert a integer containing commas to a integer without commas.
 
-    :param string comma_integer: a integer containing commas
+    :param comma_integer: a integer containing commas
 
     :return: A integer without commas
-    :rtype: int
     """
     return int(comma_integer.replace(',', ''))
 
 
-def parse_stats(stdout):
+def parse_stats(stdout: str) -> dict:
     """Parse the standard output of the rsync process.
 
-    :param string stdout: The standard output of the rsync process
+    :param stdout: The standard output of the rsync process
 
     :return: A dictionary containing all the stats numbers.
-    :rtype: dict
     """
     result = {}
 
@@ -209,16 +207,15 @@ def parse_stats(stdout):
     return result
 
 
-def service_name(host_name, src, dest):
+def service_name(host_name: str, src: str, dest: str) -> str:
     """Format a service name to use as a Nagios or Icinga service name.
 
-    :param string host_name: The hostname of the machine the rsync job running
+    :param host_name: The hostname of the machine the rsync job running
       on.
-    :param string src: A source string rsync understands
-    :param string dest: A destination string rsync understands
+    :param src: A source string rsync understands
+    :param dest: A destination string rsync understands
 
     :return: The service name
-    :rtype: string
     """
     result = 'rsync_{}_{}_{}'.format(host_name, src, dest)
     result = re.sub(r'[/@:\.~]', '-', result)
@@ -237,29 +234,28 @@ class Checks:
       failed.
     """
 
-    def __init__(self, raise_exception=True):
+    def __init__(self, raise_exception: bool = True):
         self.raise_exception = raise_exception
         self._messages = []
         self.passed = True
 
     @property
-    def messages(self):
+    def messages(self) -> str:
         """
         :return: A concatenated string containing all messages of all failed
           checks.
-        :rtype: string
         """
         return ' '.join(self._messages)
 
-    def _log_fail(self, message):
+    def _log_fail(self, message: str) -> None:
         self._messages.append(message)
         watch.log.warning(message)
         self.passed = False
 
-    def check_file(self, file_path):
+    def check_file(self, file_path: str) -> None:
         """Check if a file exists.
 
-        :param string file_path: The file to check.
+        :param file_path: The file to check.
         """
         if not os.path.exists(file_path):
             self._log_fail(
@@ -272,10 +268,10 @@ class Checks:
                 '--check-file: The file \'{}\' exists.'.format(file_path)
             )
 
-    def check_ping(self, dest):
+    def check_ping(self, dest: str) -> None:
         """Check if a remote host is reachable by pinging to it.
 
-        :param string dest: A destination to ping to.
+        :param dest: A destination to ping to.
         """
         process = subprocess.run(['ping', '-c', '3', dest],
                                  stdout=subprocess.DEVNULL,
@@ -287,15 +283,12 @@ class Checks:
         else:
             watch.log.info('--check-ping: \'{}\' is reachable.'.format(dest))
 
-    def check_ssh_login(self, ssh_host):
+    def check_ssh_login(self, ssh_host: str) -> None:
         """Check if the given host is online by retrieving its hostname.
 
-        :param string ssh_host: A ssh host string in the form of:
+        :param ssh_host: A ssh host string in the form of:
           `user@hostname` or `hostname` or `alias` (as specified in
           `~/.ssh/config`)
-
-        :return: True or False
-        :rtype: boolean
         """
         process = subprocess.run(['ssh', ssh_host, 'ls'],
                                  stdout=subprocess.DEVNULL,
@@ -309,7 +302,7 @@ class Checks:
                 '--check-ssh-login: \'{}\' is reachable.'.format(ssh_host)
             )
 
-    def have_passed(self):
+    def have_passed(self) -> bool:
         """
         :return: True in fall checks have passed else false.
         :rtype: boolean"""
@@ -318,7 +311,7 @@ class Checks:
         return self.passed
 
 
-def main():
+def main() -> None:
     """Main function. Gets called by `entry_points` `console_scripts`."""
     # To generate the argparser we use a not fully configured ConfigReader.
     # We need `args` for the configs.
