@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import versioneer
 
 
-def read(file_name):
+def read(file_name: str) -> str:
     """
     Read the contents of a text file and return its content.
 
@@ -39,13 +39,12 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.8',
     ],
     install_requires=[
         'pycrypto>=2.0',
         'six',
-        'jflib>=0.4.2',
+        'jflib>=0.4.7',
     ],
     entry_points={
         'console_scripts': [
