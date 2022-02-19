@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import socket
+import typing
 import subprocess
 
 from jflib import command_watcher
@@ -103,7 +104,7 @@ def get_argparser() -> argparse.ArgumentParser:
     return parser
 
 
-def comma_int_to_int(comma_integer: str) -> int:
+def convert_stat_number_to_int(comma_integer: str) -> int:
     """Convert a integer containing commas to a integer without commas.
 
     :param comma_integer: a integer containing commas
@@ -113,19 +114,19 @@ def comma_int_to_int(comma_integer: str) -> int:
     return int(comma_integer.replace(',', ''))
 
 
-def parse_stats(stdout: str) -> dict:
+def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
     """Parse the standard output of the rsync process.
 
     :param stdout: The standard output of the rsync process
 
     :return: A dictionary containing all the stats numbers.
     """
-    result = {}
+    result: typing.Dict[str, typing.Union[int, float]] = {}
 
-    def search(regex, exception_msg):
+    def search(regex: str, exception_msg: str) -> int:
         match = re.search(regex, stdout)
         if match:
-            return comma_int_to_int(match.group(1))
+            return convert_stat_number_to_int(match.group(1))
         else:
             raise StatsNotFoundError(exception_msg)
 
@@ -144,7 +145,8 @@ def parse_stats(stdout: str) -> dict:
     # raise no error
     match = re.search(r'\nNumber of deleted files: ([\d,]*)', stdout)
     if match:
-        result['num_deleted_files'] = comma_int_to_int(match.group(1))
+        result['num_deleted_files'] = convert_stat_number_to_int(
+            match.group(1))
     else:
         result['num_deleted_files'] = 0
 
@@ -227,16 +229,16 @@ def service_name(host_name: str, src: str, dest: str) -> str:
     return result
 
 
-class Checks:
+class ChecksCollection:
     """Collect multiple check results.
 
-    :params boolean raise_exception: Raise exception it some checks have
+    :params raise_exception: Raise an exception it some checks have
       failed.
     """
 
     def __init__(self, raise_exception: bool = True):
         self.raise_exception = raise_exception
-        self._messages = []
+        self._messages: list[str] = []
         self.passed = True
 
     @property
@@ -350,7 +352,7 @@ def main() -> None:
     raise_exception = False
     if args.action_check_failed == 'exception':
         raise_exception = True
-    checks = Checks(raise_exception=raise_exception)
+    checks = ChecksCollection(raise_exception=raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
     if args.check_ping:
