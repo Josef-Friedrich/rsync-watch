@@ -34,7 +34,8 @@ class TestCase(unittest.TestCase):
         self.stdout = None
         self.stderr = None
 
-    def patch(self, args: list[str], mocks_subprocess_run: list[mock.Mock]=[],
+    def patch(self, args: list[str],
+              mocks_subprocess_run: list[mock.Mock] = [],
               watch_run_stdout: str = OUTPUT,
               watch_run_returncode: int = 0):
         with patch('sys.argv',  ['cmd'] + list(args)), \
