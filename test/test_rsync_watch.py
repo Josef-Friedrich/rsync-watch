@@ -1,14 +1,10 @@
+import os
+import subprocess
 import unittest
 from unittest.mock import patch
-import subprocess
-import os
 
-from rsync_watch import \
-    ChecksCollection, \
-    parse_stats, \
-    service_name, \
-    StatsNotFoundError
-
+from rsync_watch import (ChecksCollection, StatsNotFoundError, parse_stats,
+                         service_name)
 
 SCRIPT = 'rsync-watch.py'
 

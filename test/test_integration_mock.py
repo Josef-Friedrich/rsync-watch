@@ -1,8 +1,10 @@
-import unittest
-from unittest.mock import patch
-from unittest import mock
-from jflib import Capturing
 import os
+import unittest
+from unittest import mock
+from unittest.mock import patch
+
+from jflib import Capturing
+
 import rsync_watch
 
 OUTPUT = '''

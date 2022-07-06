@@ -5,13 +5,12 @@ import os
 import re
 import shlex
 import socket
-import typing
 import subprocess
+import typing
 
-from jflib import command_watcher
-
-from jflib import Watch, ConfigReader
+from jflib import ConfigReader, Watch, command_watcher
 from jflib.command_watcher import CommandWatcherError
+
 from rsync_watch._version import get_versions
 
 __version__ = get_versions()['version']
