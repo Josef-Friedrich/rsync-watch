@@ -1,6 +1,5 @@
 import os
 
-import versioneer
 from setuptools import find_packages, setup
 
 
@@ -25,8 +24,7 @@ setup(
     author_email='josef@friedrich.rocks',
     description=('A Python script to monitor the execution of a rsync task.'),
     license='GPL3',
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version='0.0.0',
     project_urls={
         'Source': 'https://github.com/Josef-Friedrich/rsync-watch',
         'Tracker': 'https://github.com/Josef-Friedrich/rsync-watch/issues',

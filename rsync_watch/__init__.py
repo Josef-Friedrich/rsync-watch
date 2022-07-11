@@ -11,9 +11,8 @@ import typing
 from jflib import ConfigReader, Watch, command_watcher
 from jflib.command_watcher import CommandWatcherError
 
-from rsync_watch._version import get_versions
 
-__version__ = get_versions()['version']
+__version__ = '0.0.0'
 
 
 class StatsNotFoundError(CommandWatcherError):
@@ -87,7 +86,7 @@ def get_argparser() -> argparse.ArgumentParser:
         '-v',
         '--version',
         action='version',
-        version='%(prog)s {version}'.format(version=get_versions()['version'])
+        version='%(prog)s {version}'.format(version=__version__)
     )
 
     parser.add_argument(
