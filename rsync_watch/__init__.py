@@ -12,7 +12,7 @@ from jflib import ConfigReader, Watch, command_watcher
 from jflib.command_watcher import CommandWatcherError
 
 
-__version__ = '0.0.0'
+__version__ = '0.4.1'
 
 
 class StatsNotFoundError(CommandWatcherError):
