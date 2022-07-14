@@ -6,11 +6,11 @@ authors = ["Josef Friedrich <josef@friedrich.rocks>"]
 readme = "README.md"
 license = "GPL-3.0-only"
 classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-    'Programming Language :: Python :: 3.8',
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.8",
 ]
-repository = 'https://github.com/Josef-Friedrich/rsync-watch'
+repository = "https://github.com/Josef-Friedrich/rsync-watch"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -26,4 +26,4 @@ requires = ["poetry>=1.2.0b2"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry.scripts]
-'rsync-watch.py' = "rsync_watch:main"
+"rsync-watch.py" = "rsync_watch:main"
