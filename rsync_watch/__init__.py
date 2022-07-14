@@ -7,12 +7,12 @@ import shlex
 import socket
 import subprocess
 import typing
+from importlib import metadata
 
 from jflib import ConfigReader, Watch, command_watcher
 from jflib.command_watcher import CommandWatcherError
 
-
-__version__ = '0.4.1'
+__version__: str = metadata.version('rsync_watch')
 
 
 class StatsNotFoundError(CommandWatcherError):
