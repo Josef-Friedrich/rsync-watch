@@ -16,9 +16,9 @@ source_suffix = '.rst'
 
 master_doc = 'index'
 
-project = u'rsync_watch'
-copyright = u'2019, Josef Friedrich'
-author = u'Josef Friedrich'
+project = 'rsync_watch'
+copyright = '2019, Josef Friedrich'
+author = 'Josef Friedrich'
 version = rsync_watch.__version__
 release = rsync_watch.__version__
 language = 'en'
