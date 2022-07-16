@@ -42,7 +42,7 @@ positional arguments:
   src                   The source ([[USER@]HOST:]SRC)
   dest                  The destination ([[USER@]HOST:]DEST)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --host-name HOST_NAME
                         The hostname to submit over NSCA to the monitoring.
