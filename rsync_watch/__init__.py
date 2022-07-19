@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import argparse
 import os
@@ -9,10 +9,10 @@ import subprocess
 import typing
 from importlib import metadata
 
-from jflib import ConfigReader, Watch, command_watcher
-from jflib.command_watcher import CommandWatcherError
+from command_watcher import CONFIG_READER_SPEC, CommandWatcherError, Watch
+from conf2levels import ConfigReader
 
-__version__: str = metadata.version('rsync_watch')
+__version__: str = metadata.version("rsync_watch")
 
 
 class StatsNotFoundError(CommandWatcherError):
@@ -20,84 +20,74 @@ class StatsNotFoundError(CommandWatcherError):
 
 
 def get_argparser() -> argparse.ArgumentParser:
-    """
-    :return: A `ArgumentParse` object.
-    :rtype: object
-    """
     parser = argparse.ArgumentParser(
-        description='A Python script to monitor the execution of a rsync task.'
+        description="A Python script to monitor the execution of a rsync task."
     )
 
     parser.add_argument(
-        '--host-name',
-        help='The hostname to submit over NSCA to the monitoring.',
+        "--host-name",
+        help="The hostname to submit over NSCA to the monitoring.",
     )
 
     parser.add_argument(
-        '--dest-user-group',
-        metavar='USER_GROUP_NAME',
-        help='Both the user name and the group name of the destination will '
-        'be set to this name.',
+        "--dest-user-group",
+        metavar="USER_GROUP_NAME",
+        help="Both the user name and the group name of the destination will "
+        "be set to this name.",
     )
 
     parser.add_argument(
-        '--rsync-args',
-        help='Rsync CLI arguments. Insert some rsync command line arguments.'
-             'Wrap all arguments in one string, for example: '
-             '--rsync-args \'--exclude \"this folder\"\'',
+        "--rsync-args",
+        help="Rsync CLI arguments. Insert some rsync command line arguments."
+        "Wrap all arguments in one string, for example: "
+        "--rsync-args '--exclude \"this folder\"'",
     )
 
     # checks
 
     checks = parser.add_argument_group(
-        title='checks',
-        description='Perform different checks before running the rsync task.'
+        title="checks",
+        description="Perform different checks before running the rsync task.",
     )
 
     checks.add_argument(
-        '--action-check-failed',
-        choices=('exception', 'skip'),
-        default='skip',
-        help='Select action what to do when a check failed.',
+        "--action-check-failed",
+        choices=("exception", "skip"),
+        default="skip",
+        help="Select action what to do when a check failed.",
     )
 
     checks.add_argument(
-        '--check-file',
-        metavar='FILE_PATH',
-        help='Check if a file exists on the local machine.'
+        "--check-file",
+        metavar="FILE_PATH",
+        help="Check if a file exists on the local machine.",
     )
 
     checks.add_argument(
-        '--check-ping',
-        metavar='DESTINATION',
-        help='Check if a remote host is reachable by pinging. DESTINATION can '
-             'a IP address or a host name or a full qualified host name.'
+        "--check-ping",
+        metavar="DESTINATION",
+        help="Check if a remote host is reachable by pinging. DESTINATION can "
+        "a IP address or a host name or a full qualified host name.",
     )
 
     checks.add_argument(
-        '--check-ssh-login',
-        metavar='SSH_LOGIN',
-        help='Check if a remote host is reachable over the network by SSHing '
-             'into it. SSH_LOGIN: “root@192.168.1.1” '
-             'or “root@example.com” or “example.com”.'
+        "--check-ssh-login",
+        metavar="SSH_LOGIN",
+        help="Check if a remote host is reachable over the network by SSHing "
+        "into it. SSH_LOGIN: “root@192.168.1.1” "
+        "or “root@example.com” or “example.com”.",
     )
 
     parser.add_argument(
-        '-v',
-        '--version',
-        action='version',
-        version='%(prog)s {version}'.format(version=__version__)
+        "-v",
+        "--version",
+        action="version",
+        version="%(prog)s {version}".format(version=__version__),
     )
 
-    parser.add_argument(
-        'src',
-        help='The source ([[USER@]HOST:]SRC)'
-    )
+    parser.add_argument("src", help="The source ([[USER@]HOST:]SRC)")
 
-    parser.add_argument(
-        'dest',
-        help='The destination ([[USER@]HOST:]DEST)'
-    )
+    parser.add_argument("dest", help="The destination ([[USER@]HOST:]DEST)")
 
     return parser
 
@@ -109,7 +99,7 @@ def convert_stat_number_to_int(comma_integer: str) -> int:
 
     :return: A integer without commas
     """
-    return int(comma_integer.replace(',', ''))
+    return int(comma_integer.replace(",", ""))
 
 
 def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
@@ -128,80 +118,76 @@ def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
         else:
             raise StatsNotFoundError(exception_msg)
 
-    result['num_files'] = search(
-        r'\nNumber of files: ([\d,]*)',
-        'Number of files: X,XXX (reg: X,XXX, dir: X,XXX)'
+    result["num_files"] = search(
+        r"\nNumber of files: ([\d,]*)",
+        "Number of files: X,XXX (reg: X,XXX, dir: X,XXX)",
     )
 
-    result['num_created_files'] = search(
-        r'\nNumber of created files: ([\d,]*)',
-        'Number of created files: X,XXX (reg: X,XXX, dir: X,XXX)',
+    result["num_created_files"] = search(
+        r"\nNumber of created files: ([\d,]*)",
+        "Number of created files: X,XXX (reg: X,XXX, dir: X,XXX)",
     )
 
     # num_deleted_files
     # This line is sometimes missing on rsync --version 3.1.2
     # raise no error
-    match = re.search(r'\nNumber of deleted files: ([\d,]*)', stdout)
+    match = re.search(r"\nNumber of deleted files: ([\d,]*)", stdout)
     if match:
-        result['num_deleted_files'] = convert_stat_number_to_int(
-            match.group(1))
+        result["num_deleted_files"] = convert_stat_number_to_int(match.group(1))
     else:
-        result['num_deleted_files'] = 0
+        result["num_deleted_files"] = 0
 
-    result['num_files_transferred'] = search(
-        r'\nNumber of regular files transferred: ([\d,]*)\n',
-        'Number of regular files transferred: X,XXX',
+    result["num_files_transferred"] = search(
+        r"\nNumber of regular files transferred: ([\d,]*)\n",
+        "Number of regular files transferred: X,XXX",
     )
 
-    result['total_size'] = search(
-        r'\nTotal file size: ([\d,]*) bytes\n',
-        'Total file size: X,XXX bytes',
+    result["total_size"] = search(
+        r"\nTotal file size: ([\d,]*) bytes\n",
+        "Total file size: X,XXX bytes",
     )
 
-    result['transferred_size'] = search(
-        r'\nTotal transferred file size: ([\d,]*) bytes\n',
-        'Total transferred file size: X,XXX bytes',
+    result["transferred_size"] = search(
+        r"\nTotal transferred file size: ([\d,]*) bytes\n",
+        "Total transferred file size: X,XXX bytes",
     )
 
-    result['literal_data'] = search(
-        r'\nLiteral data: ([\d,]*) bytes\n',
-        'Literal data: X,XXX bytes',
+    result["literal_data"] = search(
+        r"\nLiteral data: ([\d,]*) bytes\n",
+        "Literal data: X,XXX bytes",
     )
 
-    result['matched_data'] = search(
-        r'\nMatched data: ([\d,]*) bytes\n',
-        'Matched data: X,XXX bytes',
+    result["matched_data"] = search(
+        r"\nMatched data: ([\d,]*) bytes\n",
+        "Matched data: X,XXX bytes",
     )
 
-    result['list_size'] = search(
-        r'\nFile list size: ([\d,]*)\n',
-        'File list size: X,XXX'
+    result["list_size"] = search(
+        r"\nFile list size: ([\d,]*)\n", "File list size: X,XXX"
     )
 
     # list_generation_time
-    match = re.search(r'\nFile list generation time: ([\d\.]*) seconds\n',
-                      stdout)
+    match = re.search(r"\nFile list generation time: ([\d\.]*) seconds\n", stdout)
     if match:
-        result['list_generation_time'] = float(match.group(1))
+        result["list_generation_time"] = float(match.group(1))
     else:
-        raise StatsNotFoundError('File list generation time: X.XXX seconds')
+        raise StatsNotFoundError("File list generation time: X.XXX seconds")
 
     # list_transfer_time
-    match = re.search(r'\nFile list transfer time: ([\d\.]*) seconds\n',
-                      stdout)
+    match = re.search(r"\nFile list transfer time: ([\d\.]*) seconds\n", stdout)
     if match:
-        result['list_transfer_time'] = float(match.group(1))
+        result["list_transfer_time"] = float(match.group(1))
     else:
-        raise StatsNotFoundError('File list transfer time: X.XXX seconds')
+        raise StatsNotFoundError("File list transfer time: X.XXX seconds")
 
-    result['bytes_sent'] = search(
-        r'\nTotal bytes sent: ([\d,]*)\n',
-        'Total bytes sent: X,XXX',
+    result["bytes_sent"] = search(
+        r"\nTotal bytes sent: ([\d,]*)\n",
+        "Total bytes sent: X,XXX",
     )
 
-    result['bytes_received'] = search(
-        r'\nTotal bytes received: ([\d,]*)\n',
-        'Total bytes received: X,XXX',
+    result["bytes_received"] = search(
+        r"\nTotal bytes received: ([\d,]*)\n",
+        "Total bytes received: X,XXX",
     )
 
     return result
@@ -217,13 +203,13 @@ def service_name(host_name: str, src: str, dest: str) -> str:
 
     :return: The service name
     """
-    result = 'rsync_{}_{}_{}'.format(host_name, src, dest)
-    result = re.sub(r'[/@:\.~]', '-', result)
-    result = re.sub(r'-*_-*', '_', result)
-    result = re.sub(r'-{2,}', '-', result)
-    result = re.sub(r'_{2,}', '_', result)
-    result = re.sub(r'-$', '', result)
-    result = re.sub(r'^-', '', result)
+    result = "rsync_{}_{}_{}".format(host_name, src, dest)
+    result = re.sub(r"[/@:\.~]", "-", result)
+    result = re.sub(r"-*_-*", "_", result)
+    result = re.sub(r"-{2,}", "-", result)
+    result = re.sub(r"_{2,}", "_", result)
+    result = re.sub(r"-$", "", result)
+    result = re.sub(r"^-", "", result)
     return result
 
 
@@ -245,7 +231,7 @@ class ChecksCollection:
         :return: A concatenated string containing all messages of all failed
           checks.
         """
-        return ' '.join(self._messages)
+        return " ".join(self._messages)
 
     def _log_fail(self, message: str) -> None:
         self._messages.append(message)
@@ -259,29 +245,25 @@ class ChecksCollection:
         """
         if not os.path.exists(file_path):
             self._log_fail(
-                '--check-file: The file \'{}\' doesn’t exist.'.format(
-                    file_path
-                )
+                "--check-file: The file '{}' doesn’t exist.".format(file_path)
             )
         else:
-            watch.log.info(
-                '--check-file: The file \'{}\' exists.'.format(file_path)
-            )
+            watch.log.info("--check-file: The file '{}' exists.".format(file_path))
 
     def check_ping(self, dest: str) -> None:
         """Check if a remote host is reachable by pinging to it.
 
         :param dest: A destination to ping to.
         """
-        process = subprocess.run(['ping', '-c', '3', dest],
-                                 stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL)
+        process = subprocess.run(
+            ["ping", "-c", "3", dest],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         if process.returncode != 0:
-            self._log_fail(
-                '--check-ping: \'{}\' is not reachable.'.format(dest)
-            )
+            self._log_fail("--check-ping: '{}' is not reachable.".format(dest))
         else:
-            watch.log.info('--check-ping: \'{}\' is reachable.'.format(dest))
+            watch.log.info("--check-ping: '{}' is reachable.".format(dest))
 
     def check_ssh_login(self, ssh_host: str) -> None:
         """Check if the given host is online by retrieving its hostname.
@@ -290,17 +272,15 @@ class ChecksCollection:
           `user@hostname` or `hostname` or `alias` (as specified in
           `~/.ssh/config`)
         """
-        process = subprocess.run(['ssh', ssh_host, 'ls'],
-                                 stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL)
+        process = subprocess.run(
+            ["ssh", ssh_host, "ls"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         if not process.returncode == 0:
-            self._log_fail(
-                '--check-ssh-login: \'{}\' is not reachable.'.format(ssh_host)
-            )
+            self._log_fail("--check-ssh-login: '{}' is not reachable.".format(ssh_host))
         else:
-            watch.log.info(
-                '--check-ssh-login: \'{}\' is reachable.'.format(ssh_host)
-            )
+            watch.log.info("--check-ssh-login: '{}' is reachable.".format(ssh_host))
 
     def have_passed(self) -> bool:
         """
@@ -317,7 +297,7 @@ def main() -> None:
     # We need `args` for the configs.
     # We get the service name from the args.
     # A typical chicken-egg-situation.
-    config_reader = ConfigReader(spec=command_watcher.CONFIG_READER_SPEC)
+    config_reader = ConfigReader(spec=CONFIG_READER_SPEC)
     parser = get_argparser()
     config_reader.spec_to_argparse(parser)
     args = parser.parse_args()
@@ -330,25 +310,25 @@ def main() -> None:
 
     service = service_name(host_name, args.src, args.dest)
 
-    ini_file = os.path.join('/', 'etc', 'command-watcher.ini')
+    ini_file = os.path.join("/", "etc", "command-watcher.ini")
     if os.path.exists(ini_file):
         config_reader = ConfigReader(
-            spec=command_watcher.CONFIG_READER_SPEC,
+            spec=CONFIG_READER_SPEC,
             argparse=args,
             ini=ini_file,
         )
     else:
         config_reader = ConfigReader(
-            spec=command_watcher.CONFIG_READER_SPEC,
+            spec=CONFIG_READER_SPEC,
             argparse=(args, {}),
         )
     global watch
     watch = Watch(service_name=service, config_reader=config_reader)
 
-    watch.log.info('Service name: {}'.format(service))
+    watch.log.info("Service name: {}".format(service))
 
     raise_exception = False
-    if args.action_check_failed == 'exception':
+    if args.action_check_failed == "exception":
         raise_exception = True
     checks = ChecksCollection(raise_exception=raise_exception)
     if args.check_file:
@@ -362,24 +342,24 @@ def main() -> None:
         watch.report(status=1, custom_output=checks.messages)
         watch.log.info(checks.messages)
     else:
-        rsync_command = ['rsync', '-av', '--delete', '--stats']
+        rsync_command = ["rsync", "-av", "--delete", "--stats"]
 
         if args.dest_user_group:
             # https://stackoverflow.com/a/62982981
             # zsh:1: no matches found: --usermap=*:smb
-            escape_star = ''
-            if ':' in args.dest:
-                escape_star = '\\'
+            escape_star = ""
+            if ":" in args.dest:
+                escape_star = "\\"
             rsync_command += [
-                '--usermap={}*:{}'.format(escape_star, args.dest_user_group),
-                '--groupmap={}*:{}'.format(escape_star, args.dest_user_group)
+                "--usermap={}*:{}".format(escape_star, args.dest_user_group),
+                "--groupmap={}*:{}".format(escape_star, args.dest_user_group),
             ]
         if args.rsync_args:
             rsync_command += shlex.split(args.rsync_args)
         rsync_command += [args.src, args.dest]
 
-        watch.log.info('Source: {}'.format(args.src))
-        watch.log.info('Destination: {}'.format(args.dest))
+        watch.log.info("Source: {}".format(args.src))
+        watch.log.info("Destination: {}".format(args.dest))
 
         # git://git.samba.org/rsync.git
         # errcode.h
