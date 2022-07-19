@@ -3,7 +3,7 @@ name = "rsync_watch"
 version = "0.4.1"
 description = "A Python script to monitor the execution of a rsync task."
 authors = ["Josef Friedrich <josef@friedrich.rocks>"]
-readme = "README.md"
+readme = "README.rst"
 license = "GPL-3.0-only"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -20,6 +20,7 @@ jflib = "^1.0.0"
 pytest = "^5.2"
 mypy = "^0.961"
 autopep8 = "^1.6.0"
+readme-patcher = "^0.3.0"
 
 [build-system]
 requires = ["poetry>=1.2.0b2"]
