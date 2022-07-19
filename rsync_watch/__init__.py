@@ -9,8 +9,9 @@ import subprocess
 import typing
 from importlib import metadata
 
-from jflib import ConfigReader, Watch, command_watcher
-from jflib.command_watcher import CommandWatcherError
+from conf2levels import ConfigReader
+
+from command_watcher import Watch, CommandWatcherError, CONFIG_READER_SPEC
 
 __version__: str = metadata.version('rsync_watch')
 
@@ -317,7 +318,7 @@ def main() -> None:
     # We need `args` for the configs.
     # We get the service name from the args.
     # A typical chicken-egg-situation.
-    config_reader = ConfigReader(spec=command_watcher.CONFIG_READER_SPEC)
+    config_reader = ConfigReader(spec=CONFIG_READER_SPEC)
     parser = get_argparser()
     config_reader.spec_to_argparse(parser)
     args = parser.parse_args()
@@ -333,13 +334,13 @@ def main() -> None:
     ini_file = os.path.join('/', 'etc', 'command-watcher.ini')
     if os.path.exists(ini_file):
         config_reader = ConfigReader(
-            spec=command_watcher.CONFIG_READER_SPEC,
+            spec=CONFIG_READER_SPEC,
             argparse=args,
             ini=ini_file,
         )
     else:
         config_reader = ConfigReader(
-            spec=command_watcher.CONFIG_READER_SPEC,
+            spec=CONFIG_READER_SPEC,
             argparse=(args, {}),
         )
     global watch

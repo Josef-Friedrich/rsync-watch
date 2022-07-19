@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 
-from jflib import Capturing
+from stdout_stderr_capturing import Capturing
 
 import rsync_watch
 
