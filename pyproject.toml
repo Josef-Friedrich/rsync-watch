@@ -23,6 +23,8 @@ mypy = "^0.961"
 stdout-stderr-capturing = "^0.2.0"
 black = "^22.6.0"
 isort = "^5.10.1"
+readme-patcher = "^0.3.0"
+# readme-patcher = { path = "../readme_patcher" }
 
 [build-system]
 requires = ["poetry>=1.2.0b2"]
