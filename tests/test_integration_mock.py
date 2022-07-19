@@ -1,7 +1,6 @@
 import os
 import unittest
-from unittest import mock
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from stdout_stderr_capturing import Capturing
 
@@ -28,15 +27,17 @@ total size is 0  speedup is 0.00
 
 
 class TestCase(unittest.TestCase):
+    subprocess_run: Mock
+
     def setUp(self):
-        self.subprocess_run = None
+        self.subprocess_run = Mock()
         self.stdout = None
         self.stderr = None
 
     def patch(
         self,
         args: list[str],
-        mocks_subprocess_run: list[mock.Mock] = [],
+        mocks_subprocess_run: list[Mock] = [],
         watch_run_stdout: str = OUTPUT,
         watch_run_returncode: int = 0,
     ):
@@ -98,7 +99,7 @@ class TestOptionCheckSshLogin(TestCase):
                 "tmp1",
                 "tmp2",
             ],
-            [mock.Mock(returncode=0)],
+            [Mock(returncode=0)],
         )
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
@@ -121,7 +122,7 @@ class TestOptionCheckSshLogin(TestCase):
                     "tmp2",
                 ],
                 mocks_subprocess_run=[
-                    mock.Mock(returncode=255),
+                    Mock(returncode=255),
                 ],
             )
         self.assertEqual(
@@ -142,7 +143,7 @@ class TestOptionCheckPing(TestCase):
                     "tmp1",
                     "tmp2",
                 ],
-                [mock.Mock(returncode=1)],
+                [Mock(returncode=1)],
             )
         self.assertEqual(
             str(exception.exception), "--check-ping: '8.8.8.8' is not reachable."
@@ -158,7 +159,7 @@ class TestOptionCheckPing(TestCase):
                 "tmp1",
                 "tmp2",
             ],
-            [mock.Mock(returncode=0)],
+            [Mock(returncode=0)],
         )
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
@@ -170,18 +171,14 @@ class TestOptionCheckPing(TestCase):
         )
 
     def test_no_exception_fail(self):
-        self.patch(
-            ["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [mock.Mock(returncode=1)]
-        )
+        self.patch(["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [Mock(returncode=1)])
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
             ["ping", "-c", "3", "8.8.8.8"], stderr=-3, stdout=-3
         )
 
     def test_no_exception_pass(self):
-        self.patch(
-            ["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [mock.Mock(returncode=0)]
-        )
+        self.patch(["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [Mock(returncode=0)])
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
             ["ping", "-c", "3", "8.8.8.8"], stderr=-3, stdout=-3

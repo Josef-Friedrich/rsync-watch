@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import argparse
 import os
@@ -20,10 +20,6 @@ class StatsNotFoundError(CommandWatcherError):
 
 
 def get_argparser() -> argparse.ArgumentParser:
-    """
-    :return: A `ArgumentParse` object.
-    :rtype: object
-    """
     parser = argparse.ArgumentParser(
         description="A Python script to monitor the execution of a rsync task."
     )
