@@ -1,5 +1,8 @@
+<<<<<<< HEAD
+=======
 |pypi.org| |Documentation Status|
 
+>>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
 rsync-watch.py
 ==============
 
@@ -15,8 +18,11 @@ Features
 -  The script ``rsync-watch.py`` can be configured to perform various
    checks before starting the rsync process.
 
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
 :: 
 
     usage: rsync-watch.py [-h] [--host-name HOST_NAME]
@@ -123,6 +129,8 @@ Features
       --beep-activated BEEP_ACTIVATED
                             Activate the beep channel to report auditive messages.
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -130,3 +138,4 @@ Features
    :target: https://pypi.python.org/pypi/rsync_watch
 .. |Documentation Status| image:: https://readthedocs.org/projects/rsync-watch/badge/?version=latest
    :target: https://rsync-watch.readthedocs.io/en/latest/?badge=latest
+>>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
