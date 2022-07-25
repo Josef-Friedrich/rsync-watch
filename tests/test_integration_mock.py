@@ -1,4 +1,5 @@
 import os
+from typing import List
 import unittest
 from unittest.mock import Mock, patch
 
@@ -37,7 +38,7 @@ class TestCase(unittest.TestCase):
     def patch(
         self,
         args: list[str],
-        mocks_subprocess_run: list[Mock] = [],
+        mocks_subprocess_run: List[Mock] = [],
         watch_run_stdout: str = OUTPUT,
         watch_run_returncode: int = 0,
     ):

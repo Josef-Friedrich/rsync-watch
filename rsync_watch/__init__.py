@@ -14,6 +14,8 @@ from conf2levels import ConfigReader
 
 __version__: str = metadata.version("rsync_watch")
 
+watch: Watch
+
 
 class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""

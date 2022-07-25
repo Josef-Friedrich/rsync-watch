@@ -66,7 +66,7 @@ total size is 22,083  speedup is 17.97
 class TestUnitParseStats(unittest.TestCase):
     def test_empty_string(self):
         with self.assertRaises(StatsNotFoundError) as context, patch(
-            "rsync_watch.watch"
+            "rsync_watch.Watch"
         ):
             parse_stats("")
         self.assertEqual(
