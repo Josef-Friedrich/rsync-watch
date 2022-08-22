@@ -28,7 +28,7 @@ Features
 :: 
 
     usage: rsync-watch.py [-h] [--host-name HOST_NAME]
-                          [--dest-user-group USER_GROUP_NAME]
+                          [--dest-user-group USER_GROUP_NAME] [--exclude EXCLUDE]
                           [--rsync-args RSYNC_ARGS]
                           [--action-check-failed {exception,skip}]
                           [--check-file FILE_PATH] [--check-ping DESTINATION]
@@ -61,6 +61,7 @@ Features
       --dest-user-group USER_GROUP_NAME
                             Both the user name and the group name of the
                             destination will be set to this name.
+      --exclude EXCLUDE     See the documention of --exclude in the rsync manual.
       --rsync-args RSYNC_ARGS
                             Rsync CLI arguments. Insert some rsync command line
                             arguments. Wrap all arguments in one string, for

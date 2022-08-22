@@ -72,7 +72,7 @@ class TestIntegrationMock(TestCase):
         info.assert_any_call("Destination: tmp2")
         self.watch.log.info.assert_any_call("Service name: rsync_test1_tmp1_tmp2")
 
-    def test_rsync_args(self) -> None:
+    def test_option_rsync_args(self) -> None:
         self.patch(["--rsync-args", '--exclude "lol lol"', "tmp1", "tmp2"])
         self.watch.run.assert_called_with(
             [
@@ -82,6 +82,71 @@ class TestIntegrationMock(TestCase):
                 "--stats",
                 "--exclude",
                 "lol lol",
+                "tmp1",
+                "tmp2",
+            ],
+            ignore_exceptions=[24],
+        )
+
+
+class TestOptionExclude(TestCase):
+    def assert_exclude_args(self, *args: str) -> None:
+        self.watch.run.assert_called_with(
+            [
+                "rsync",
+                "-av",
+                "--delete",
+                "--stats",
+                *args,
+                "tmp1",
+                "tmp2",
+            ],
+            ignore_exceptions=[24],
+        )
+
+    def test_single(self) -> None:
+        self.patch(["--exclude=school", "tmp1", "tmp2"])
+        self.assert_exclude_args("--exclude=school")
+
+    def test_multiple(self) -> None:
+        self.patch(["--exclude=school", "--exclude=\"My Music\"", "tmp1", "tmp2"])
+        self.watch.run.assert_called_with(
+            [
+                "rsync",
+                "-av",
+                "--delete",
+                "--stats",
+                "--exclude=school",
+                "--exclude='My Music'",
+                "tmp1",
+                "tmp2",
+            ],
+            ignore_exceptions=[24],
+        )
+
+    def test_without_equal_sign(self) -> None:
+        self.patch(["--exclude", "school", "tmp1", "tmp2"])
+        self.watch.run.assert_called_with(
+            [
+                "rsync",
+                "-av",
+                "--delete",
+                "--stats",
+                "--exclude=school",
+                "tmp1",
+                "tmp2",
+            ],
+            ignore_exceptions=[24],
+        )
+
+    def test_without(self) -> None:
+        self.patch(["tmp1", "tmp2"])
+        self.watch.run.assert_called_with(
+            [
+                "rsync",
+                "-av",
+                "--delete",
+                "--stats",
                 "tmp1",
                 "tmp2",
             ],

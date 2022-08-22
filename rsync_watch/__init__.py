@@ -11,7 +11,7 @@ from command_watcher import CONFIG_READER_SPEC, CommandWatcherError, Watch
 from conf2levels import ConfigReader
 
 from .check import ChecksCollection
-from .cli import __version__, get_argparser  # noqa: F401
+from .cli import ArgumentsDefault, __version__, get_argparser  # noqa: F401
 
 
 class StatsNotFoundError(CommandWatcherError):
@@ -139,6 +139,30 @@ def format_service_name(host_name: str, src: str, dest: str) -> str:
     return result
 
 
+def build_rsync_command(args: ArgumentsDefault) -> typing.List[str]:
+    rsync_command: typing.List[str] = ["rsync", "-av", "--delete", "--stats"]
+
+    if args.dest_user_group:
+        # https://stackoverflow.com/a/62982981
+        # zsh:1: no matches found: --usermap=*:smb
+        escape_star: str = ""
+        if ":" in args.dest:
+            escape_star: str = "\\"
+        rsync_command += [
+            "--usermap={}*:{}".format(escape_star, args.dest_user_group),
+            "--groupmap={}*:{}".format(escape_star, args.dest_user_group),
+        ]
+
+    if args.exclude:
+        for exclude in args.exclude:
+            rsync_command.append("--exclude={}".format(exclude))
+    if args.rsync_args:
+        rsync_command += shlex.split(args.rsync_args)
+    rsync_command += [args.src, args.dest]
+
+    return rsync_command
+
+
 def main() -> None:
     """Main function. Gets called by `entry_points` `console_scripts`."""
     # To generate the argparser we use a not fully configured ConfigReader.
@@ -148,7 +172,7 @@ def main() -> None:
     config_reader: ConfigReader = ConfigReader(spec=CONFIG_READER_SPEC)
     parser = get_argparser()
     config_reader.spec_to_argparse(parser)
-    args = parser.parse_args()
+    args = typing.cast(ArgumentsDefault, parser.parse_args())
     del config_reader
 
     if not args.host_name:
@@ -190,21 +214,7 @@ def main() -> None:
         watch.report(status=1, custom_output=checks.messages)
         watch.log.info(checks.messages)
     else:
-        rsync_command = ["rsync", "-av", "--delete", "--stats"]
-
-        if args.dest_user_group:
-            # https://stackoverflow.com/a/62982981
-            # zsh:1: no matches found: --usermap=*:smb
-            escape_star = ""
-            if ":" in args.dest:
-                escape_star = "\\"
-            rsync_command += [
-                "--usermap={}*:{}".format(escape_star, args.dest_user_group),
-                "--groupmap={}*:{}".format(escape_star, args.dest_user_group),
-            ]
-        if args.rsync_args:
-            rsync_command += shlex.split(args.rsync_args)
-        rsync_command += [args.src, args.dest]
+        rsync_command: typing.List[str] = build_rsync_command(args)
 
         watch.log.info("Source: {}".format(args.src))
         watch.log.info("Destination: {}".format(args.dest))

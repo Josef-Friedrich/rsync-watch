@@ -1,7 +1,24 @@
 from argparse import ArgumentParser
 from importlib import metadata
+from typing import List, Literal, Optional
 
 __version__: str = metadata.version("rsync_watch")
+
+
+class ArgumentsDefault:
+    host_name: str
+    dest_user_group: Optional[str]
+    exclude: Optional[List[str]]
+    rsync_args: Optional[str]
+
+    # Checks
+    action_check_failed: Optional[Literal["exception", "skip"]]
+    check_file: Optional[str]
+    check_ping: Optional[str]
+    check_ssh_login: Optional[str]
+
+    src: str
+    dest: str
 
 
 def get_argparser() -> ArgumentParser:
@@ -19,6 +36,12 @@ def get_argparser() -> ArgumentParser:
         metavar="USER_GROUP_NAME",
         help="Both the user name and the group name of the destination will "
         "be set to this name.",
+    )
+
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        help="See the documention of --exclude in the rsync manual.",
     )
 
     parser.add_argument(
