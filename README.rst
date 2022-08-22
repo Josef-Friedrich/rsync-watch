@@ -1,8 +1,15 @@
-<<<<<<< HEAD
-=======
-|pypi.org| |Documentation Status|
+.. image:: http://img.shields.io/pypi/v/rsync-watch.svg
+    :target: https://pypi.org/project/rsync-watch
+    :alt: This package on the Python Package Index
 
->>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
+.. image:: https://github.com/Josef-Friedrich/rsync-watch/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/Josef-Friedrich/rsync-watch/actions/workflows/tests.yml
+    :alt: Tests
+
+.. image:: https://readthedocs.org/projects/rsync-watch/badge/?version=latest
+    :target: https://rsync-watch.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 rsync-watch.py
 ==============
 
@@ -18,11 +25,6 @@ Features
 -  The script ``rsync-watch.py`` can be configured to perform various
    checks before starting the rsync process.
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
 :: 
 
     usage: rsync-watch.py [-h] [--host-name HOST_NAME]
@@ -61,7 +63,7 @@ Features
                             destination will be set to this name.
       --rsync-args RSYNC_ARGS
                             Rsync CLI arguments. Insert some rsync command line
-                            arguments.Wrap all arguments in one string, for
+                            arguments. Wrap all arguments in one string, for
                             example: --rsync-args '--exclude "this folder"'
       -v, --version         show program's version number and exit
 
@@ -129,13 +131,3 @@ Features
       --beep-activated BEEP_ACTIVATED
                             Activate the beep channel to report auditive messages.
 
-<<<<<<< HEAD
-=======
-
-
-
-.. |pypi.org| image:: http://img.shields.io/pypi/v/rsync_watch.svg
-   :target: https://pypi.python.org/pypi/rsync_watch
-.. |Documentation Status| image:: https://readthedocs.org/projects/rsync-watch/badge/?version=latest
-   :target: https://rsync-watch.readthedocs.io/en/latest/?badge=latest
->>>>>>> 7635ce00d53484ce296556440ccaa3f10d0694c3
