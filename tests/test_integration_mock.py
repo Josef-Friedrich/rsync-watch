@@ -110,48 +110,15 @@ class TestOptionExclude(TestCase):
 
     def test_multiple(self) -> None:
         self.patch(["--exclude=school", '--exclude="My Music"', "tmp1", "tmp2"])
-        self.watch.run.assert_called_with(
-            [
-                "rsync",
-                "-av",
-                "--delete",
-                "--stats",
-                "--exclude=school",
-                "--exclude='My Music'",
-                "tmp1",
-                "tmp2",
-            ],
-            ignore_exceptions=[24],
-        )
+        self.assert_exclude_args("--exclude=school", '--exclude="My Music"')
 
     def test_without_equal_sign(self) -> None:
         self.patch(["--exclude", "school", "tmp1", "tmp2"])
-        self.watch.run.assert_called_with(
-            [
-                "rsync",
-                "-av",
-                "--delete",
-                "--stats",
-                "--exclude=school",
-                "tmp1",
-                "tmp2",
-            ],
-            ignore_exceptions=[24],
-        )
+        self.assert_exclude_args("--exclude=school")
 
     def test_without(self) -> None:
         self.patch(["tmp1", "tmp2"])
-        self.watch.run.assert_called_with(
-            [
-                "rsync",
-                "-av",
-                "--delete",
-                "--stats",
-                "tmp1",
-                "tmp2",
-            ],
-            ignore_exceptions=[24],
-        )
+        self.assert_exclude_args()
 
 
 class TestOptionCheckSshLogin(TestCase):

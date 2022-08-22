@@ -6,6 +6,7 @@ import re
 import shlex
 import socket
 import typing
+from argparse import Namespace
 
 from command_watcher import CONFIG_READER_SPEC, CommandWatcherError, Watch
 from conf2levels import ConfigReader
@@ -186,13 +187,13 @@ def main() -> None:
     if os.path.exists(ini_file):
         config_reader: ConfigReader = ConfigReader(
             spec=CONFIG_READER_SPEC,
-            argparse=args,
+            argparse=typing.cast(Namespace, args),
             ini=ini_file,
         )
     else:
         config_reader: ConfigReader = ConfigReader(
             spec=CONFIG_READER_SPEC,
-            argparse=(args, {}),
+            argparse=(typing.cast(Namespace, args), {}),
         )
     global watch
     watch = Watch(service_name=service, config_reader=config_reader)
@@ -211,7 +212,7 @@ def main() -> None:
         checks.check_ssh_login(args.check_ssh_login)
 
     if not checks.have_passed():
-        watch.report(status=1, custom_output=checks.messages)
+        watch.report(status=1, custom_message=checks.messages)
         watch.log.info(checks.messages)
     else:
         rsync_command: typing.List[str] = build_rsync_command(args)
