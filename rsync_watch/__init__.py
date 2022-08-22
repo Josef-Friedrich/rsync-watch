@@ -1,97 +1,21 @@
 #! /usr/bin/env python
 
-import argparse
+
 import os
 import re
 import shlex
 import socket
-import subprocess
 import typing
-from importlib import metadata
 
 from command_watcher import CONFIG_READER_SPEC, CommandWatcherError, Watch
 from conf2levels import ConfigReader
 
-__version__: str = metadata.version("rsync_watch")
-
-watch: Watch
+from .check import ChecksCollection
+from .cli import __version__, get_argparser  # noqa: F401
 
 
 class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
-
-
-def get_argparser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="A Python script to monitor the execution of a rsync task."
-    )
-
-    parser.add_argument(
-        "--host-name",
-        help="The hostname to submit over NSCA to the monitoring.",
-    )
-
-    parser.add_argument(
-        "--dest-user-group",
-        metavar="USER_GROUP_NAME",
-        help="Both the user name and the group name of the destination will "
-        "be set to this name.",
-    )
-
-    parser.add_argument(
-        "--rsync-args",
-        help="Rsync CLI arguments. Insert some rsync command line arguments. "
-        "Wrap all arguments in one string, for example: "
-        "--rsync-args '--exclude \"this folder\"'",
-    )
-
-    # checks
-
-    checks = parser.add_argument_group(
-        title="checks",
-        description="Perform different checks before running the rsync task.",
-    )
-
-    checks.add_argument(
-        "--action-check-failed",
-        choices=("exception", "skip"),
-        default="skip",
-        help="Select action what to do when a check failed.",
-    )
-
-    checks.add_argument(
-        "--check-file",
-        metavar="FILE_PATH",
-        help="Check if a file exists on the local machine.",
-    )
-
-    checks.add_argument(
-        "--check-ping",
-        metavar="DESTINATION",
-        help="Check if a remote host is reachable by pinging. DESTINATION can "
-        "a IP address or a host name or a full qualified host name.",
-    )
-
-    checks.add_argument(
-        "--check-ssh-login",
-        metavar="SSH_LOGIN",
-        help="Check if a remote host is reachable over the network by SSHing "
-        "into it. SSH_LOGIN: “root@192.168.1.1” "
-        "or “root@example.com” or “example.com”.",
-    )
-
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version="%(prog)s {version}".format(version=__version__),
-    )
-
-    parser.add_argument("src", help="The source ([[USER@]HOST:]SRC)")
-
-    parser.add_argument("dest", help="The destination ([[USER@]HOST:]DEST)")
-
-    return parser
 
 
 def convert_stat_number_to_int(comma_integer: str) -> int:
@@ -215,84 +139,6 @@ def format_service_name(host_name: str, src: str, dest: str) -> str:
     return result
 
 
-class ChecksCollection:
-    """Collect multiple check results.
-
-    :params raise_exception: Raise an exception it some checks have
-      failed.
-    """
-
-    def __init__(self, raise_exception: bool = True):
-        self.raise_exception = raise_exception
-        self._messages: list[str] = []
-        self.passed = True
-
-    @property
-    def messages(self) -> str:
-        """
-        :return: A concatenated string containing all messages of all failed
-          checks.
-        """
-        return " ".join(self._messages)
-
-    def _log_fail(self, message: str) -> None:
-        self._messages.append(message)
-        watch.log.warning(message)
-        self.passed = False
-
-    def check_file(self, file_path: str) -> None:
-        """Check if a file exists.
-
-        :param file_path: The file to check.
-        """
-        if not os.path.exists(file_path):
-            self._log_fail(
-                "--check-file: The file '{}' doesn’t exist.".format(file_path)
-            )
-        else:
-            watch.log.info("--check-file: The file '{}' exists.".format(file_path))
-
-    def check_ping(self, dest: str) -> None:
-        """Check if a remote host is reachable by pinging to it.
-
-        :param dest: A destination to ping to.
-        """
-        process = subprocess.run(
-            ["ping", "-c", "3", dest],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        if process.returncode != 0:
-            self._log_fail("--check-ping: '{}' is not reachable.".format(dest))
-        else:
-            watch.log.info("--check-ping: '{}' is reachable.".format(dest))
-
-    def check_ssh_login(self, ssh_host: str) -> None:
-        """Check if the given host is online by retrieving its hostname.
-
-        :param ssh_host: A ssh host string in the form of:
-          `user@hostname` or `hostname` or `alias` (as specified in
-          `~/.ssh/config`)
-        """
-        process = subprocess.run(
-            ["ssh", ssh_host, "ls"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        if not process.returncode == 0:
-            self._log_fail("--check-ssh-login: '{}' is not reachable.".format(ssh_host))
-        else:
-            watch.log.info("--check-ssh-login: '{}' is reachable.".format(ssh_host))
-
-    def have_passed(self) -> bool:
-        """
-        :return: True in fall checks have passed else false.
-        :rtype: boolean"""
-        if self.raise_exception and not self.passed:
-            raise CommandWatcherError(self.messages)
-        return self.passed
-
-
 def main() -> None:
     """Main function. Gets called by `entry_points` `console_scripts`."""
     # To generate the argparser we use a not fully configured ConfigReader.
@@ -332,7 +178,7 @@ def main() -> None:
     raise_exception = False
     if args.action_check_failed == "exception":
         raise_exception = True
-    checks = ChecksCollection(raise_exception=raise_exception)
+    checks = ChecksCollection(watch, raise_exception=raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
     if args.check_ping:

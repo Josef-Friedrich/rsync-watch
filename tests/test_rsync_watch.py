@@ -1,7 +1,7 @@
 import os
 import subprocess
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from rsync_watch import (
     ChecksCollection,
@@ -10,9 +10,9 @@ from rsync_watch import (
     parse_stats,
 )
 
-SCRIPT = "rsync-watch.py"
+SCRIPT: str = "rsync-watch.py"
 
-OUTPUT1 = """
+OUTPUT1: str = """
 sending incremental file list
 Number of files: 1 (dir: 2)
 Number of created files: 3
@@ -31,7 +31,7 @@ sent 61 bytes  received 17 bytes  156.00 bytes/sec
 total size is 0  speedup is 0.00
 """
 
-OUTPUT_REAL = """
+OUTPUT_REAL: str = """
 Number of files: 4,928 (reg: 3,256, dir: 1,672)
 Number of created files: 112 (reg: 64, dir: 48)
 Number of deleted files: 214 (reg: 125, dir: 89)
@@ -49,7 +49,7 @@ sent 13,631,370 bytes  received 19,859 bytes
 total size is 4,222,882,233  speedup is 309.34
 """
 
-OUTPUT_WITHOUT_DELETED = """
+OUTPUT_WITHOUT_DELETED: str = """
 receiving incremental file list
 Number of files: 40 (reg: 16, dir: 24)
 Number of created files: 0
@@ -69,7 +69,7 @@ total size is 22,083  speedup is 17.97
 
 
 class TestUnitParseStats(unittest.TestCase):
-    def test_empty_string(self):
+    def test_empty_string(self) -> None:
         with self.assertRaises(StatsNotFoundError) as context, patch(
             "rsync_watch.Watch"
         ):
@@ -78,7 +78,7 @@ class TestUnitParseStats(unittest.TestCase):
             str(context.exception), "Number of files: X,XXX (reg: X,XXX, dir: X,XXX)"
         )
 
-    def test_output1(self):
+    def test_output1(self) -> None:
         result = parse_stats(OUTPUT1)
         self.assertEqual(
             result,
@@ -99,7 +99,7 @@ class TestUnitParseStats(unittest.TestCase):
             },
         )
 
-    def test_output_real(self):
+    def test_output_real(self) -> None:
         result = parse_stats(OUTPUT_REAL)
         self.assertEqual(
             result,
@@ -120,7 +120,7 @@ class TestUnitParseStats(unittest.TestCase):
             },
         )
 
-    def test_output_without_deleted(self):
+    def test_output_without_deleted(self) -> None:
         result = parse_stats(OUTPUT_WITHOUT_DELETED)
         self.assertEqual(
             result,
@@ -143,21 +143,21 @@ class TestUnitParseStats(unittest.TestCase):
 
 
 class TestUnitServiceName(unittest.TestCase):
-    def test_special_characters(self):
+    def test_special_characters(self) -> None:
         self.assertEqual(format_service_name("/@:.", "", ""), "rsync_")
 
-    def test_dash_underscore(self):
+    def test_dash_underscore(self) -> None:
         self.assertEqual(format_service_name("-_-", "", ""), "rsync_")
 
-    def test_tilde(self):
+    def test_tilde(self) -> None:
         self.assertEqual(
             format_service_name("l~o~l", "tmp1", "tmp2"), "rsync_l-o-l_tmp1_tmp2"
         )
 
-    def test_multiple_dashs_underscore(self):
+    def test_multiple_dashs_underscore(self) -> None:
         self.assertEqual(format_service_name("---_---", "", ""), "rsync_")
 
-    def test_real_world(self):
+    def test_real_world(self) -> None:
         service = format_service_name(
             "wnas", "serverway:/var/backups/mysql", "/data/backup/host/serverway/mysql"
         )
@@ -170,34 +170,34 @@ class TestUnitServiceName(unittest.TestCase):
 
 class TestUnitClassChecks(unittest.TestCase):
     def get_checks(self, raise_exception: bool) -> ChecksCollection:
-        return ChecksCollection(raise_exception=raise_exception)
+        return ChecksCollection(watch=Mock(), raise_exception=raise_exception)
 
-    def test_initialisation_raise_exception_true(self):
+    def test_initialisation_raise_exception_true(self) -> None:
         checks = self.get_checks(raise_exception=True)
         self.assertEqual(checks.raise_exception, True)
         self.assertEqual(checks.messages, "")
         self.assertEqual(checks.passed, True)
 
-    def test_initialisation_raise_exception_false(self):
+    def test_initialisation_raise_exception_false(self) -> None:
         checks = self.get_checks(raise_exception=False)
         self.assertEqual(checks.raise_exception, False)
 
-    def test_method_have_passed_true(self):
+    def test_method_have_passed_true(self) -> None:
         checks = self.get_checks(raise_exception=False)
         self.assertEqual(checks.have_passed(), True)
 
-    def test_method_have_passed_false(self):
+    def test_method_have_passed_false(self) -> None:
         checks = self.get_checks(raise_exception=False)
         checks._log_fail("test")
         self.assertEqual(checks.have_passed(), False)
 
-    def test_method_check_file_pass(self):
+    def test_method_check_file_pass(self) -> None:
         checks = self.get_checks(raise_exception=False)
         checks.check_file(os.getcwd())
         self.assertEqual(checks.have_passed(), True)
         self.assertEqual(checks.messages, "")
 
-    def test_method_check_file_fail(self):
+    def test_method_check_file_fail(self) -> None:
         checks = self.get_checks(raise_exception=False)
         checks.check_file("/d2c75c94-78b8-4f09-9fc4-3779d020bbd4")
         self.assertEqual(checks.have_passed(), False)
@@ -209,12 +209,12 @@ class TestUnitClassChecks(unittest.TestCase):
 
 
 class TestIntegration(unittest.TestCase):
-    def test_without_arguments(self):
+    def test_without_arguments(self) -> None:
         process = subprocess.run([SCRIPT], encoding="utf-8", stderr=subprocess.PIPE)
         self.assertEqual(process.returncode, 2)
         self.assertIn("the following arguments are required:", process.stderr)
 
-    def test_help(self):
+    def test_help(self) -> None:
         process = subprocess.run(
             [SCRIPT, "--help"], encoding="utf-8", stdout=subprocess.PIPE
         )
@@ -224,7 +224,7 @@ class TestIntegration(unittest.TestCase):
             "Perform different checks before running the rsync task.", process.stdout
         )
 
-    def test_version(self):
+    def test_version(self) -> None:
         process = subprocess.run(
             [SCRIPT, "--version"], encoding="utf-8", stdout=subprocess.PIPE
         )

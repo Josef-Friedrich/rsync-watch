@@ -7,7 +7,7 @@ from stdout_stderr_capturing import Capturing
 
 import rsync_watch
 
-OUTPUT = """
+OUTPUT: str = """
 sending incremental file list
 Number of files: 1 (dir: 2)
 Number of created files: 3
@@ -30,20 +30,20 @@ total size is 0  speedup is 0.00
 class TestCase(unittest.TestCase):
     subprocess_run: Mock
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.subprocess_run = Mock()
         self.stdout = None
         self.stderr = None
 
     def patch(
         self,
-        args: list[str],
+        args: List[str],
         mocks_subprocess_run: List[Mock] = [],
         watch_run_stdout: str = OUTPUT,
         watch_run_returncode: int = 0,
-    ):
+    ) -> None:
         with patch("sys.argv", ["cmd"] + list(args)), patch(
-            "rsync_watch.subprocess.run"
+            "rsync_watch.check.subprocess.run"
         ) as self.subprocess_run, patch("rsync_watch.Watch") as Watch, Capturing(
             stream="stdout"
         ) as self.stdout, Capturing(
@@ -60,7 +60,7 @@ class TestCase(unittest.TestCase):
 
 
 class TestIntegrationMock(TestCase):
-    def test_log_info(self):
+    def test_log_info(self) -> None:
         self.patch(["--host-name", "test1", "tmp1", "tmp2"])
         self.watch.run.assert_called_with(
             ["rsync", "-av", "--delete", "--stats", "tmp1", "tmp2"],
@@ -72,7 +72,7 @@ class TestIntegrationMock(TestCase):
         info.assert_any_call("Destination: tmp2")
         self.watch.log.info.assert_any_call("Service name: rsync_test1_tmp1_tmp2")
 
-    def test_rsync_args(self):
+    def test_rsync_args(self) -> None:
         self.patch(["--rsync-args", '--exclude "lol lol"', "tmp1", "tmp2"])
         self.watch.run.assert_called_with(
             [
@@ -90,7 +90,7 @@ class TestIntegrationMock(TestCase):
 
 
 class TestOptionCheckSshLogin(TestCase):
-    def test_action_check_failed_pass(self):
+    def test_action_check_failed_pass(self) -> None:
         self.patch(
             [
                 "--action-check-failed",
@@ -111,7 +111,7 @@ class TestOptionCheckSshLogin(TestCase):
             ignore_exceptions=[24],
         )
 
-    def test_action_check_failed_fail(self):
+    def test_action_check_failed_fail(self) -> None:
         with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 [
@@ -133,7 +133,7 @@ class TestOptionCheckSshLogin(TestCase):
 
 
 class TestOptionCheckPing(TestCase):
-    def test_action_check_failed_fail(self):
+    def test_action_check_failed_fail(self) -> None:
         with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 [
@@ -150,7 +150,7 @@ class TestOptionCheckPing(TestCase):
             str(exception.exception), "--check-ping: '8.8.8.8' is not reachable."
         )
 
-    def test_action_check_failed_pass(self):
+    def test_action_check_failed_pass(self) -> None:
         self.patch(
             [
                 "--action-check-failed",
@@ -171,14 +171,14 @@ class TestOptionCheckPing(TestCase):
             ignore_exceptions=[24],
         )
 
-    def test_no_exception_fail(self):
+    def test_no_exception_fail(self) -> None:
         self.patch(["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [Mock(returncode=1)])
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
             ["ping", "-c", "3", "8.8.8.8"], stderr=-3, stdout=-3
         )
 
-    def test_no_exception_pass(self):
+    def test_no_exception_pass(self) -> None:
         self.patch(["--check-ping", "8.8.8.8", "tmp1", "tmp2"], [Mock(returncode=0)])
         self.assertEqual(self.subprocess_run.call_count, 1)
         self.subprocess_run.assert_called_with(
@@ -191,7 +191,7 @@ class TestOptionCheckPing(TestCase):
 
 
 class TestOptionCheckFile(TestCase):
-    def test_action_check_failed_pass(self):
+    def test_action_check_failed_pass(self) -> None:
         self.patch(
             [
                 "--action-check-failed",
@@ -208,7 +208,7 @@ class TestOptionCheckFile(TestCase):
             ignore_exceptions=[24],
         )
 
-    def test_action_check_failed_fail(self):
+    def test_action_check_failed_fail(self) -> None:
         with self.assertRaises(rsync_watch.CommandWatcherError) as exception:
             self.patch(
                 [
@@ -228,7 +228,7 @@ class TestOptionCheckFile(TestCase):
 
 
 class TestOptionDestUserGroup(TestCase):
-    def test_dest_local(self):
+    def test_dest_local(self) -> None:
         self.patch(["--dest-user-group=jf", "tmp1", "tmp2"])
         self.assertEqual(self.watch.run.call_count, 1)
         self.watch.run.assert_any_call(
@@ -245,7 +245,7 @@ class TestOptionDestUserGroup(TestCase):
             ignore_exceptions=[24],
         )
 
-    def test_dest_remote(self):
+    def test_dest_remote(self) -> None:
         self.patch(["--dest-user-group=jf", "tmp1", "remote:tmp2"])
         self.assertEqual(self.watch.run.call_count, 1)
         self.watch.run.assert_any_call(
