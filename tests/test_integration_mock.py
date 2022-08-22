@@ -109,7 +109,7 @@ class TestOptionExclude(TestCase):
         self.assert_exclude_args("--exclude=school")
 
     def test_multiple(self) -> None:
-        self.patch(["--exclude=school", "--exclude=\"My Music\"", "tmp1", "tmp2"])
+        self.patch(["--exclude=school", '--exclude="My Music"', "tmp1", "tmp2"])
         self.watch.run.assert_called_with(
             [
                 "rsync",

@@ -176,21 +176,21 @@ def main() -> None:
     del config_reader
 
     if not args.host_name:
-        host_name = socket.gethostname()
+        host_name: str = socket.gethostname()
     else:
-        host_name = args.host_name
+        host_name: str = args.host_name
 
     service = format_service_name(host_name, args.src, args.dest)
 
     ini_file = os.path.join("/", "etc", "command-watcher.ini")
     if os.path.exists(ini_file):
-        config_reader = ConfigReader(
+        config_reader: ConfigReader = ConfigReader(
             spec=CONFIG_READER_SPEC,
             argparse=args,
             ini=ini_file,
         )
     else:
-        config_reader = ConfigReader(
+        config_reader: ConfigReader = ConfigReader(
             spec=CONFIG_READER_SPEC,
             argparse=(args, {}),
         )
@@ -199,10 +199,10 @@ def main() -> None:
 
     watch.log.info("Service name: {}".format(service))
 
-    raise_exception = False
+    raise_exception: bool = False
     if args.action_check_failed == "exception":
-        raise_exception = True
-    checks = ChecksCollection(watch, raise_exception=raise_exception)
+        raise_exception: bool = True
+    checks: ChecksCollection = ChecksCollection(watch, raise_exception=raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
     if args.check_ping:
@@ -225,7 +225,7 @@ def main() -> None:
         # Vanished files occure if you for example open thunderbird and
         # rsync-watch.py synchronizes your maildir folder.
         watch.run(rsync_command, ignore_exceptions=[24])
-        stats = parse_stats(watch.stdout)
+        stats: typing.Dict[str, int | float] = parse_stats(watch.stdout)
         watch.report(status=0, performance_data=stats)
         watch.log.debug(stats)
 
