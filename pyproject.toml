@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rsync_watch"
-version = "0.5.0"
+version = "0.6.0"
 description = "A Python script to monitor the execution of a rsync task."
 authors = ["Josef Friedrich <josef@friedrich.rocks>"]
 readme = "README.rst"
