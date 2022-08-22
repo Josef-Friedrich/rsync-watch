@@ -1,6 +1,6 @@
 import os
-from typing import List
 import unittest
+from typing import List
 from unittest.mock import Mock, patch
 
 from stdout_stderr_capturing import Capturing

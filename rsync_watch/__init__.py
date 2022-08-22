@@ -40,7 +40,7 @@ def get_argparser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--rsync-args",
-        help="Rsync CLI arguments. Insert some rsync command line arguments."
+        help="Rsync CLI arguments. Insert some rsync command line arguments. "
         "Wrap all arguments in one string, for example: "
         "--rsync-args '--exclude \"this folder\"'",
     )
@@ -195,7 +195,7 @@ def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
     return result
 
 
-def service_name(host_name: str, src: str, dest: str) -> str:
+def format_service_name(host_name: str, src: str, dest: str) -> str:
     """Format a service name to use as a Nagios or Icinga service name.
 
     :param host_name: The hostname of the machine the rsync job running
@@ -205,7 +205,7 @@ def service_name(host_name: str, src: str, dest: str) -> str:
 
     :return: The service name
     """
-    result = "rsync_{}_{}_{}".format(host_name, src, dest)
+    result: str = "rsync_{}_{}_{}".format(host_name, src, dest)
     result = re.sub(r"[/@:\.~]", "-", result)
     result = re.sub(r"-*_-*", "_", result)
     result = re.sub(r"-{2,}", "-", result)
@@ -299,7 +299,7 @@ def main() -> None:
     # We need `args` for the configs.
     # We get the service name from the args.
     # A typical chicken-egg-situation.
-    config_reader = ConfigReader(spec=CONFIG_READER_SPEC)
+    config_reader: ConfigReader = ConfigReader(spec=CONFIG_READER_SPEC)
     parser = get_argparser()
     config_reader.spec_to_argparse(parser)
     args = parser.parse_args()
@@ -310,7 +310,7 @@ def main() -> None:
     else:
         host_name = args.host_name
 
-    service = service_name(host_name, args.src, args.dest)
+    service = format_service_name(host_name, args.src, args.dest)
 
     ini_file = os.path.join("/", "etc", "command-watcher.ini")
     if os.path.exists(ini_file):

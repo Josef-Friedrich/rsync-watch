@@ -3,7 +3,12 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from rsync_watch import ChecksCollection, StatsNotFoundError, parse_stats, service_name
+from rsync_watch import (
+    ChecksCollection,
+    StatsNotFoundError,
+    format_service_name,
+    parse_stats,
+)
 
 SCRIPT = "rsync-watch.py"
 
@@ -139,19 +144,21 @@ class TestUnitParseStats(unittest.TestCase):
 
 class TestUnitServiceName(unittest.TestCase):
     def test_special_characters(self):
-        self.assertEqual(service_name("/@:.", "", ""), "rsync_")
+        self.assertEqual(format_service_name("/@:.", "", ""), "rsync_")
 
     def test_dash_underscore(self):
-        self.assertEqual(service_name("-_-", "", ""), "rsync_")
+        self.assertEqual(format_service_name("-_-", "", ""), "rsync_")
 
     def test_tilde(self):
-        self.assertEqual(service_name("l~o~l", "tmp1", "tmp2"), "rsync_l-o-l_tmp1_tmp2")
+        self.assertEqual(
+            format_service_name("l~o~l", "tmp1", "tmp2"), "rsync_l-o-l_tmp1_tmp2"
+        )
 
     def test_multiple_dashs_underscore(self):
-        self.assertEqual(service_name("---_---", "", ""), "rsync_")
+        self.assertEqual(format_service_name("---_---", "", ""), "rsync_")
 
     def test_real_world(self):
-        service = service_name(
+        service = format_service_name(
             "wnas", "serverway:/var/backups/mysql", "/data/backup/host/serverway/mysql"
         )
         self.assertEqual(
