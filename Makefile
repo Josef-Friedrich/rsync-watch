@@ -8,7 +8,7 @@ upload:
 
 test:
 	pip3 install tox
-	tox
+	poetry run tox
 
 doc:
 	tox -e docs
