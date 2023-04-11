@@ -29,7 +29,7 @@ readme-patcher = "^0.6.0"
 # readme-patcher = { path = "../readme_patcher" }
 
 [build-system]
-requires = ["poetry>=1.2.0b2"]
+requires = ["poetry>=1.4.2"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry.scripts]
