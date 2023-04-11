@@ -34,16 +34,13 @@ def convert_number_to_int(formatted_number: str) -> int:
 
 
 def convert_number_to_float(formatted_number: str) -> float:
-    if ("." in formatted_number) and ("," in formatted_number):
-        formatted_number = formatted_number.replace(".", "")
-        formatted_number = formatted_number.replace(",", ".")
-
-    formatted_number = formatted_number.replace(",", ".")
-    return float(formatted_number)
+    return float(formatted_number.replace(",", "."))
 
 
 def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
     """Parse the standard output of the rsync process.
+
+    https://github.com/WayneD/rsync/blob/c69dc7a5ab473bb52a575b5803026c2694761084/main.c#L416-L465
 
     :param stdout: The standard output of the rsync process
 

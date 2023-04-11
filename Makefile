@@ -6,6 +6,13 @@ upload:
 	pip3 install twine
 	twine upload --skip-existing dist/*
 
+install:
+	poetry install
+
+update:
+	poetry lock
+	poetry install
+
 test:
 	pip3 install tox
 	poetry run tox
