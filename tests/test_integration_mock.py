@@ -26,6 +26,25 @@ sent 61 bytes  received 17 bytes  156.00 bytes/sec
 total size is 0  speedup is 0.00
 """
 
+OUTPUT_2023: str = """
+receiving incremental file list
+Number of files: 2.931 (reg: 2.039, dir: 892)
+Number of created files: 0
+Number of deleted files: 0
+Number of regular files transferred: 0
+Total file size: 21.746.023.768 bytes
+Total transferred file size: 0 bytes
+Literal data: 0 bytes
+Matched data: 0 bytes
+File list size: 84.875
+File list generation time: 0,147 seconds
+File list transfer time: 0,000 seconds
+Total bytes sent: 950
+Total bytes received: 139.226
+sent 950 bytes  received 139.226 bytes  3.548,76 bytes/sec
+total size is 21.746.023.768  speedup is 155.133,72
+"""
+
 
 class TestCase(unittest.TestCase):
     subprocess_run: Mock
