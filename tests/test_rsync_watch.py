@@ -67,6 +67,25 @@ sent 59 bytes  received 1,170 bytes  819.33 bytes/sec
 total size is 22,083  speedup is 17.97
 """
 
+OUTPUT_2023: str = """
+receiving incremental file list
+Number of files: 2.931 (reg: 2.039, dir: 892)
+Number of created files: 0
+Number of deleted files: 0
+Number of regular files transferred: 0
+Total file size: 21.746.023.768 bytes
+Total transferred file size: 0 bytes
+Literal data: 0 bytes
+Matched data: 0 bytes
+File list size: 84.875
+File list generation time: 0,147 seconds
+File list transfer time: 0,000 seconds
+Total bytes sent: 950
+Total bytes received: 139.226
+sent 950 bytes  received 139.226 bytes  3.548,76 bytes/sec
+total size is 21.746.023.768  speedup is 155.133,72
+"""
+
 
 class TestUnitParseStats(unittest.TestCase):
     def test_empty_string(self) -> None:
@@ -138,6 +157,27 @@ class TestUnitParseStats(unittest.TestCase):
                 "list_transfer_time": 0.000,
                 "bytes_sent": 59,
                 "bytes_received": 1170,
+            },
+        )
+
+    def test_output_2023(self) -> None:
+        result = parse_stats(OUTPUT_2023)
+        self.assertEqual(
+            result,
+            {
+                "num_files": 2931,
+                "num_created_files": 0,
+                "num_deleted_files": 0,
+                "num_files_transferred": 0,
+                "total_size": 21746023768,
+                "transferred_size": 0,
+                "literal_data": 0,
+                "matched_data": 0,
+                "list_size": 84875,
+                "list_generation_time": 0.147,
+                "list_transfer_time": 0.000,
+                "bytes_sent": 950,
+                "bytes_received": 139226,
             },
         )
 

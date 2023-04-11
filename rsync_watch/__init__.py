@@ -19,14 +19,27 @@ class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
 
 
-def convert_stat_number_to_int(comma_integer: str) -> int:
-    """Convert a integer containing commas to a integer without commas.
+def convert_number_to_int(formatted_number: str) -> int:
+    """Convert a integer containing commas or dots to a integer without commas or dots.
 
-    :param comma_integer: a integer containing commas
+    :param comma_integer: a integer containing commas or dots
 
-    :return: A integer without commas
+    :return: A integer without commas or dots
     """
-    return int(comma_integer.replace(",", ""))
+
+    formatted_number = formatted_number.replace(",", "")
+    formatted_number = formatted_number.replace(".", "")
+
+    return int(formatted_number)
+
+
+def convert_number_to_float(formatted_number: str) -> float:
+    if ("." in formatted_number) and ("," in formatted_number):
+        formatted_number = formatted_number.replace(".", "")
+        formatted_number = formatted_number.replace(",", ".")
+
+    formatted_number = formatted_number.replace(",", ".")
+    return float(formatted_number)
 
 
 def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
@@ -41,79 +54,79 @@ def parse_stats(stdout: str) -> typing.Dict[str, typing.Union[int, float]]:
     def search(regex: str, exception_msg: str) -> int:
         match = re.search(regex, stdout)
         if match:
-            return convert_stat_number_to_int(match.group(1))
+            return convert_number_to_int(match.group(1))
         else:
             raise StatsNotFoundError(exception_msg)
 
     result["num_files"] = search(
-        r"\nNumber of files: ([\d,]*)",
+        r"\nNumber of files: ([\d,\.]*)",
         "Number of files: X,XXX (reg: X,XXX, dir: X,XXX)",
     )
 
     result["num_created_files"] = search(
-        r"\nNumber of created files: ([\d,]*)",
+        r"\nNumber of created files: ([\d,\.]*)",
         "Number of created files: X,XXX (reg: X,XXX, dir: X,XXX)",
     )
 
     # num_deleted_files
     # This line is sometimes missing on rsync --version 3.1.2
     # raise no error
-    match = re.search(r"\nNumber of deleted files: ([\d,]*)", stdout)
+    match = re.search(r"\nNumber of deleted files: ([\d,\.]*)", stdout)
     if match:
-        result["num_deleted_files"] = convert_stat_number_to_int(match.group(1))
+        result["num_deleted_files"] = convert_number_to_int(match.group(1))
     else:
         result["num_deleted_files"] = 0
 
     result["num_files_transferred"] = search(
-        r"\nNumber of regular files transferred: ([\d,]*)\n",
+        r"\nNumber of regular files transferred: ([\d,\.]*)\n",
         "Number of regular files transferred: X,XXX",
     )
 
     result["total_size"] = search(
-        r"\nTotal file size: ([\d,]*) bytes\n",
+        r"\nTotal file size: ([\d,\.]*) bytes\n",
         "Total file size: X,XXX bytes",
     )
 
     result["transferred_size"] = search(
-        r"\nTotal transferred file size: ([\d,]*) bytes\n",
+        r"\nTotal transferred file size: ([\d,\.]*) bytes\n",
         "Total transferred file size: X,XXX bytes",
     )
 
     result["literal_data"] = search(
-        r"\nLiteral data: ([\d,]*) bytes\n",
+        r"\nLiteral data: ([\d,\.]*) bytes\n",
         "Literal data: X,XXX bytes",
     )
 
     result["matched_data"] = search(
-        r"\nMatched data: ([\d,]*) bytes\n",
+        r"\nMatched data: ([\d,\.]*) bytes\n",
         "Matched data: X,XXX bytes",
     )
 
     result["list_size"] = search(
-        r"\nFile list size: ([\d,]*)\n", "File list size: X,XXX"
+        r"\nFile list size: ([\d,\.]*)\n", "File list size: X,XXX"
     )
 
     # list_generation_time
-    match = re.search(r"\nFile list generation time: ([\d\.]*) seconds\n", stdout)
+    match = re.search(r"\nFile list generation time: ([\d,\.]*) seconds\n", stdout)
     if match:
-        result["list_generation_time"] = float(match.group(1))
+        result["list_generation_time"] = convert_number_to_float(match.group(1))
     else:
         raise StatsNotFoundError("File list generation time: X.XXX seconds")
 
     # list_transfer_time
-    match = re.search(r"\nFile list transfer time: ([\d\.]*) seconds\n", stdout)
+    match = re.search(r"\nFile list transfer time: ([\d,\.]*) seconds\n", stdout)
     if match:
-        result["list_transfer_time"] = float(match.group(1))
+        result["list_transfer_time"] = convert_number_to_float(match.group(1))
     else:
         raise StatsNotFoundError("File list transfer time: X.XXX seconds")
 
     result["bytes_sent"] = search(
-        r"\nTotal bytes sent: ([\d,]*)\n",
+        r"\nTotal bytes sent: ([\d,\.]*)\n",
         "Total bytes sent: X,XXX",
     )
 
     result["bytes_received"] = search(
-        r"\nTotal bytes received: ([\d,]*)\n",
+        r"\nTotal bytes received: ([\d,\.]*)\n",
         "Total bytes received: X,XXX",
     )
 
