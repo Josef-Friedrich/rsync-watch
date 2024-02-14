@@ -14,6 +14,8 @@ from conf2levels import ConfigReader
 from .check import ChecksCollection
 from .cli import ArgumentsDefault, __version__, get_argparser  # noqa: F401
 
+watch: Watch
+
 
 class StatsNotFoundError(CommandWatcherError):
     """Raised when some stats regex couldn’t be found in stdout."""
@@ -158,7 +160,7 @@ def build_rsync_command(args: ArgumentsDefault) -> typing.List[str]:
         # zsh:1: no matches found: --usermap=*:smb
         escape_star: str = ""
         if ":" in args.dest:
-            escape_star: str = "\\"
+            escape_star = "\\"
         rsync_command += [
             "--usermap={}*:{}".format(escape_star, args.dest_user_group),
             "--groupmap={}*:{}".format(escape_star, args.dest_user_group),
@@ -186,22 +188,23 @@ def main() -> None:
     args = typing.cast(ArgumentsDefault, parser.parse_args())
     del config_reader
 
+    host_name: str
     if not args.host_name:
-        host_name: str = socket.gethostname()
+        host_name = socket.gethostname()
     else:
-        host_name: str = args.host_name
+        host_name = args.host_name
 
     service = format_service_name(host_name, args.src, args.dest)
 
     ini_file = os.path.join("/", "etc", "command-watcher.ini")
     if os.path.exists(ini_file):
-        config_reader: ConfigReader = ConfigReader(
+        config_reader = ConfigReader(
             spec=CONFIG_READER_SPEC,
             argparse=typing.cast(Namespace, args),
             ini=ini_file,
         )
     else:
-        config_reader: ConfigReader = ConfigReader(
+        config_reader = ConfigReader(
             spec=CONFIG_READER_SPEC,
             argparse=(typing.cast(Namespace, args), {}),
         )
@@ -212,7 +215,7 @@ def main() -> None:
 
     raise_exception: bool = False
     if args.action_check_failed == "exception":
-        raise_exception: bool = True
+        raise_exception = True
     checks: ChecksCollection = ChecksCollection(watch, raise_exception=raise_exception)
     if args.check_file:
         checks.check_file(args.check_file)
