@@ -1,7 +1,8 @@
 import os
 import subprocess
-import unittest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from rsync_watch import (
     ChecksCollection,
@@ -87,190 +88,169 @@ total size is 21.746.023.768  speedup is 155.133,72
 """
 
 
-class TestUnitParseStats(unittest.TestCase):
+class TestUnitParseStats:
     def test_empty_string(self) -> None:
-        with self.assertRaises(StatsNotFoundError) as context, patch(
-            "rsync_watch.Watch"
-        ):
+        with pytest.raises(StatsNotFoundError) as context, patch("rsync_watch.Watch"):
             parse_stats("")
-        self.assertEqual(
-            str(context.exception), "Number of files: X,XXX (reg: X,XXX, dir: X,XXX)"
+        assert (
+            context.value.args[0] == "Number of files: X,XXX (reg: X,XXX, dir: X,XXX)"
         )
 
     def test_output1(self) -> None:
         result = parse_stats(OUTPUT1)
-        self.assertEqual(
-            result,
-            {
-                "num_files": 1,
-                "num_created_files": 3,
-                "num_deleted_files": 4,
-                "num_files_transferred": 5,
-                "total_size": 6,
-                "transferred_size": 7,
-                "literal_data": 8,
-                "matched_data": 9,
-                "list_size": 10,
-                "list_generation_time": 11.000,
-                "list_transfer_time": 12.000,
-                "bytes_sent": 13,
-                "bytes_received": 14,
-            },
-        )
+        assert result == {
+            "num_files": 1,
+            "num_created_files": 3,
+            "num_deleted_files": 4,
+            "num_files_transferred": 5,
+            "total_size": 6,
+            "transferred_size": 7,
+            "literal_data": 8,
+            "matched_data": 9,
+            "list_size": 10,
+            "list_generation_time": 11.000,
+            "list_transfer_time": 12.000,
+            "bytes_sent": 13,
+            "bytes_received": 14,
+        }
 
     def test_output_real(self) -> None:
         result = parse_stats(OUTPUT_REAL)
-        self.assertEqual(
-            result,
-            {
-                "num_files": 4928,
-                "num_created_files": 112,
-                "num_deleted_files": 214,
-                "num_files_transferred": 64,
-                "total_size": 4222882233,
-                "transferred_size": 13472638,
-                "literal_data": 13472638,
-                "matched_data": 0,
-                "list_size": 65536,
-                "list_generation_time": 0.001,
-                "list_transfer_time": 0.000,
-                "bytes_sent": 13631370,
-                "bytes_received": 19859,
-            },
-        )
+        assert result == {
+            "num_files": 4928,
+            "num_created_files": 112,
+            "num_deleted_files": 214,
+            "num_files_transferred": 64,
+            "total_size": 4222882233,
+            "transferred_size": 13472638,
+            "literal_data": 13472638,
+            "matched_data": 0,
+            "list_size": 65536,
+            "list_generation_time": 0.001,
+            "list_transfer_time": 0.000,
+            "bytes_sent": 13631370,
+            "bytes_received": 19859,
+        }
 
     def test_output_without_deleted(self) -> None:
         result = parse_stats(OUTPUT_WITHOUT_DELETED)
-        self.assertEqual(
-            result,
-            {
-                "num_files": 40,
-                "num_created_files": 0,
-                "num_deleted_files": 0,
-                "num_files_transferred": 1,
-                "total_size": 22083,
-                "transferred_size": 14,
-                "literal_data": 0,
-                "matched_data": 14,
-                "list_size": 1096,
-                "list_generation_time": 0.001,
-                "list_transfer_time": 0.000,
-                "bytes_sent": 59,
-                "bytes_received": 1170,
-            },
-        )
+        assert result == {
+            "num_files": 40,
+            "num_created_files": 0,
+            "num_deleted_files": 0,
+            "num_files_transferred": 1,
+            "total_size": 22083,
+            "transferred_size": 14,
+            "literal_data": 0,
+            "matched_data": 14,
+            "list_size": 1096,
+            "list_generation_time": 0.001,
+            "list_transfer_time": 0.000,
+            "bytes_sent": 59,
+            "bytes_received": 1170,
+        }
 
     def test_output_2023(self) -> None:
         result = parse_stats(OUTPUT_2023)
-        self.assertEqual(
-            result,
-            {
-                "num_files": 2931,
-                "num_created_files": 0,
-                "num_deleted_files": 0,
-                "num_files_transferred": 0,
-                "total_size": 21746023768,
-                "transferred_size": 0,
-                "literal_data": 0,
-                "matched_data": 0,
-                "list_size": 84875,
-                "list_generation_time": 0.147,
-                "list_transfer_time": 0.000,
-                "bytes_sent": 950,
-                "bytes_received": 139226,
-            },
-        )
+        assert result == {
+            "num_files": 2931,
+            "num_created_files": 0,
+            "num_deleted_files": 0,
+            "num_files_transferred": 0,
+            "total_size": 21746023768,
+            "transferred_size": 0,
+            "literal_data": 0,
+            "matched_data": 0,
+            "list_size": 84875,
+            "list_generation_time": 0.147,
+            "list_transfer_time": 0.000,
+            "bytes_sent": 950,
+            "bytes_received": 139226,
+        }
 
 
-class TestUnitServiceName(unittest.TestCase):
+class TestUnitServiceName:
     def test_special_characters(self) -> None:
-        self.assertEqual(format_service_name("/@:.", "", ""), "rsync_")
+        assert format_service_name("/@:.", "", "") == "rsync_"
 
     def test_dash_underscore(self) -> None:
-        self.assertEqual(format_service_name("-_-", "", ""), "rsync_")
+        assert format_service_name("-_-", "", "") == "rsync_"
 
     def test_tilde(self) -> None:
-        self.assertEqual(
-            format_service_name("l~o~l", "tmp1", "tmp2"), "rsync_l-o-l_tmp1_tmp2"
-        )
+        assert format_service_name("l~o~l", "tmp1", "tmp2") == "rsync_l-o-l_tmp1_tmp2"
 
     def test_multiple_dashs_underscore(self) -> None:
-        self.assertEqual(format_service_name("---_---", "", ""), "rsync_")
+        assert format_service_name("---_---", "", "") == "rsync_"
 
     def test_real_world(self) -> None:
         service = format_service_name(
             "wnas", "serverway:/var/backups/mysql", "/data/backup/host/serverway/mysql"
         )
-        self.assertEqual(
-            service,
-            "rsync_wnas_serverway-var-backups-mysql_"
-            "data-backup-host-serverway-mysql",
+        assert (
+            service == "rsync_wnas_serverway-var-backups-mysql_"
+            "data-backup-host-serverway-mysql"
         )
 
 
-class TestUnitClassChecks(unittest.TestCase):
+class TestUnitClassChecks:
     def get_checks(self, raise_exception: bool) -> ChecksCollection:
         return ChecksCollection(watch=Mock(), raise_exception=raise_exception)
 
     def test_initialisation_raise_exception_true(self) -> None:
         checks = self.get_checks(raise_exception=True)
-        self.assertEqual(checks.raise_exception, True)
-        self.assertEqual(checks.messages, "")
-        self.assertEqual(checks.passed, True)
+        assert checks.raise_exception
+        assert checks.messages == ""
+        assert checks.passed
 
     def test_initialisation_raise_exception_false(self) -> None:
         checks = self.get_checks(raise_exception=False)
-        self.assertEqual(checks.raise_exception, False)
+        assert not checks.raise_exception
 
     def test_method_have_passed_true(self) -> None:
         checks = self.get_checks(raise_exception=False)
-        self.assertEqual(checks.have_passed(), True)
+        assert checks.have_passed()
 
     def test_method_have_passed_false(self) -> None:
         checks = self.get_checks(raise_exception=False)
-        checks._log_fail("test")
-        self.assertEqual(checks.have_passed(), False)
+        checks._log_fail("test")  # type: ignore
+        assert not checks.have_passed()
 
     def test_method_check_file_pass(self) -> None:
         checks = self.get_checks(raise_exception=False)
         checks.check_file(os.getcwd())
-        self.assertEqual(checks.have_passed(), True)
-        self.assertEqual(checks.messages, "")
+        assert checks.have_passed()
+        assert checks.messages == ""
 
     def test_method_check_file_fail(self) -> None:
         checks = self.get_checks(raise_exception=False)
         checks.check_file("/d2c75c94-78b8-4f09-9fc4-3779d020bbd4")
-        self.assertEqual(checks.have_passed(), False)
-        self.assertEqual(
-            checks.messages,
-            "--check-file: The file '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4' "
-            "doesn’t exist.",
+        assert not checks.have_passed()
+        assert (
+            checks.messages
+            == "--check-file: The file '/d2c75c94-78b8-4f09-9fc4-3779d020bbd4' "
+            "doesn’t exist."
         )
 
 
-class TestIntegration(unittest.TestCase):
+class TestIntegration:
     def test_without_arguments(self) -> None:
         process = subprocess.run([SCRIPT], encoding="utf-8", stderr=subprocess.PIPE)
-        self.assertEqual(process.returncode, 2)
-        self.assertIn("the following arguments are required:", process.stderr)
+        assert process.returncode == 2
+        assert "the following arguments are required:" in process.stderr
 
     def test_help(self) -> None:
         process = subprocess.run(
             [SCRIPT, "--help"], encoding="utf-8", stdout=subprocess.PIPE
         )
-        self.assertEqual(process.returncode, 0)
-        self.assertIn("usage: rsync-watch.py", process.stdout)
-        self.assertIn(
-            "Perform different checks before running the rsync task.", process.stdout
+        assert process.returncode == 0
+        assert "usage: rsync-watch.py" in process.stdout
+        assert (
+            "Perform different checks before running the rsync task." in process.stdout
         )
 
     def test_version(self) -> None:
         process = subprocess.run(
             [SCRIPT, "--version"], encoding="utf-8", stdout=subprocess.PIPE
         )
-        self.assertEqual(process.returncode, 0)
-        self.assertIn("rsync-watch.py ", process.stdout)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert process.returncode == 0
+        assert "rsync-watch.py " in process.stdout
