@@ -6,11 +6,12 @@
     "**/.tox/": true,
     "**/*.egg-info": true,
     "**/*.py[cod]": true,
+    "**/*.ruff_cache/": true,
+    "**/*.venv/": true,
     "**/dist/": true,
     "**/doc/html/": true,
     "**/docs/_build/": true,
-    "**/MANIFEST": true,
-    "**/nosetests.xml": true
+    "**/MANIFEST": true
   },
   "[python]": {
     "editor.rulers": [

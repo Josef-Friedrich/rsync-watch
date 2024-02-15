@@ -29,9 +29,9 @@ Features
 
     usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--dest-user-group USER_GROUP_NAME] [--exclude EXCLUDE] [--rsync-args RSYNC_ARGS] [--action-check-failed {exception,skip}] [--check-file FILE_PATH]
                           [--check-ping DESTINATION] [--check-ssh-login SSH_LOGIN] [-v] [--email-from-addr EMAIL_FROM_ADDR] [--email-to-addr EMAIL_TO_ADDR] [--email-to-addr-critical EMAIL_TO_ADDR_CRITICAL]
-                          [--email-smtp-login EMAIL_SMTP_LOGIN] [--email-smtp-password EMAIL_SMTP_PASSWORD] [--email-smtp-server EMAIL_SMTP_SERVER] [--nsca-remote-host NSCA_REMOTE_HOST]
-                          [--nsca-password NSCA_PASSWORD] [--nsca-encryption-method NSCA_ENCRYPTION_METHOD] [--nsca-port NSCA_PORT] [--icinga-url ICINGA_URL] [--icinga-user ICINGA_USER]
-                          [--icinga-password ICINGA_PASSWORD] [--beep-activated BEEP_ACTIVATED]
+                          [--email-smtp-login EMAIL_SMTP_LOGIN] [--email-smtp-password EMAIL_SMTP_PASSWORD] [--email-smtp-server EMAIL_SMTP_SERVER] [--nsca-remote-host NSCA_REMOTE_HOST] [--nsca-password NSCA_PASSWORD]
+                          [--nsca-encryption-method NSCA_ENCRYPTION_METHOD] [--nsca-port NSCA_PORT] [--icinga-url ICINGA_URL] [--icinga-user ICINGA_USER] [--icinga-password ICINGA_PASSWORD]
+                          [--beep-activated BEEP_ACTIVATED]
                           src dest
 
     A Python script to monitor the execution of a rsync task.
