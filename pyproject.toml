@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rsync_watch"
-version = "0.7.1"
+version = "0.7.2"
 description = "A Python script to monitor the execution of a rsync task."
 authors = ["Josef Friedrich <josef@friedrich.rocks>"]
 readme = "README.rst"
@@ -28,8 +28,6 @@ Sphinx = "^7"
 sphinx-rtd-theme = "^2"
 stdout-stderr-capturing = "^0"
 tox = "^4"
-
-# readme-patcher = { path = "../readme_patcher" }
 
 [build-system]
 requires = ["poetry-core"]
