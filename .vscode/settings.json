@@ -29,4 +29,5 @@
   },
   "python.defaultInterpreterPath": ".venv/bin/python",
   "python.testing.pytestEnabled": true,
+  "mypy.dmypyExecutable": "${workspaceFolder}/.venv/bin/dmypy"
 }

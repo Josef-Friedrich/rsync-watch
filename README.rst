@@ -27,9 +27,12 @@ Features
 
 :: 
 
-    usage: rsync-watch.py [-h] [--host-name HOST_NAME] [--dest-user-group USER_GROUP_NAME] [--exclude EXCLUDE]
-                          [--rsync-args RSYNC_ARGS] [--action-check-failed {exception,skip}] [--check-file FILE_PATH]
-                          [--check-ping DESTINATION] [--check-ssh-login SSH_LOGIN] [-v]
+    usage: rsync-watch.py [-h] [--host-name HOST_NAME]
+                          [--dest-user-group USER_GROUP_NAME] [--exclude EXCLUDE]
+                          [--rsync-args RSYNC_ARGS]
+                          [--action-check-failed {exception,skip}]
+                          [--check-file FILE_PATH] [--check-ping DESTINATION]
+                          [--check-ssh-login SSH_LOGIN] [-v]
                           src dest
 
     A Python script to monitor the execution of a rsync task.
@@ -43,10 +46,12 @@ Features
       --host-name HOST_NAME
                             The hostname to submit over NSCA to the monitoring.
       --dest-user-group USER_GROUP_NAME
-                            Both the user name and the group name of the destination will be set to this name.
+                            Both the user name and the group name of the
+                            destination will be set to this name.
       --exclude EXCLUDE     See the documention of --exclude in the rsync manual.
       --rsync-args RSYNC_ARGS
-                            Rsync CLI arguments. Insert some rsync command line arguments. Wrap all arguments in one string, for
+                            Rsync CLI arguments. Insert some rsync command line
+                            arguments. Wrap all arguments in one string, for
                             example: --rsync-args '--exclude "this folder"'
       -v, --version         show program's version number and exit
 
@@ -58,9 +63,11 @@ Features
       --check-file FILE_PATH
                             Check if a file exists on the local machine.
       --check-ping DESTINATION
-                            Check if a remote host is reachable by pinging. DESTINATION can a IP address or a host name or a full
+                            Check if a remote host is reachable by pinging.
+                            DESTINATION can a IP address or a host name or a full
                             qualified host name.
       --check-ssh-login SSH_LOGIN
-                            Check if a remote host is reachable over the network by SSHing into it. SSH_LOGIN: “root@192.168.1.1” or
+                            Check if a remote host is reachable over the network
+                            by SSHing into it. SSH_LOGIN: “root@192.168.1.1” or
                             “root@example.com” or “example.com”.
 

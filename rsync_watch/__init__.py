@@ -139,7 +139,7 @@ def format_service_name(host_name: str, src: str, dest: str) -> str:
 
     :return: The service name
     """
-    result: str = "rsync_{}_{}_{}".format(host_name, src, dest)
+    result: str = f"rsync_{host_name}_{src}_{dest}"
     result = re.sub(r"[/@:\.~]", "-", result)
     result = re.sub(r"-*_-*", "_", result)
     result = re.sub(r"-{2,}", "-", result)
@@ -159,13 +159,13 @@ def build_rsync_command(args: ArgumentsDefault) -> list[str]:
         if ":" in args.dest:
             escape_star = "\\"
         rsync_command += [
-            "--usermap={}*:{}".format(escape_star, args.dest_user_group),
-            "--groupmap={}*:{}".format(escape_star, args.dest_user_group),
+            f"--usermap={escape_star}*:{args.dest_user_group}",
+            f"--groupmap={escape_star}*:{args.dest_user_group}",
         ]
 
     if args.exclude:
         for exclude in args.exclude:
-            rsync_command.append("--exclude={}".format(exclude))
+            rsync_command.append(f"--exclude={exclude}")
     if args.rsync_args:
         rsync_command += shlex.split(args.rsync_args)
     rsync_command += [args.src, args.dest]
@@ -190,9 +190,11 @@ def main() -> None:
 
     service = format_service_name(host_name, args.src, args.dest)
 
-    watch = Watch(service_name=service)
+    watch = Watch(
+        service_name=service, service_display_name=f"rsync {args.src} {args.dest}"
+    )
 
-    watch.log.info("Service name: {}".format(service))
+    watch.log.info(f"Service name: {service}")
 
     raise_exception: bool = False
     if args.action_check_failed == "exception":
@@ -211,8 +213,8 @@ def main() -> None:
     else:
         rsync_command: list[str] = build_rsync_command(args)
 
-        watch.log.info("Source: {}".format(args.src))
-        watch.log.info("Destination: {}".format(args.dest))
+        watch.log.info(f"Source: {args.src}")
+        watch.log.info(f"Destination: {args.dest}")
 
         # git://git.samba.org/rsync.git
         # errcode.h

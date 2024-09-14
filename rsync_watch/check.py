@@ -42,11 +42,9 @@ class ChecksCollection:
         :param file_path: The file to check.
         """
         if not os.path.exists(file_path):
-            self._log_fail(
-                "--check-file: The file '{}' doesn’t exist.".format(file_path)
-            )
+            self._log_fail(f"--check-file: The file '{file_path}' doesn’t exist.")
         else:
-            self.watch.log.info("--check-file: The file '{}' exists.".format(file_path))
+            self.watch.log.info(f"--check-file: The file '{file_path}' exists.")
 
     def check_ping(self, dest: str) -> None:
         """Check if a remote host is reachable by pinging to it.
@@ -59,9 +57,9 @@ class ChecksCollection:
             stderr=subprocess.DEVNULL,
         )
         if process.returncode != 0:
-            self._log_fail("--check-ping: '{}' is not reachable.".format(dest))
+            self._log_fail(f"--check-ping: '{dest}' is not reachable.")
         else:
-            self.watch.log.info("--check-ping: '{}' is reachable.".format(dest))
+            self.watch.log.info(f"--check-ping: '{dest}' is reachable.")
 
     def check_ssh_login(self, ssh_host: str) -> None:
         """Check if the given host is online by retrieving its hostname.
@@ -76,11 +74,9 @@ class ChecksCollection:
             stderr=subprocess.DEVNULL,
         )
         if not process.returncode == 0:
-            self._log_fail("--check-ssh-login: '{}' is not reachable.".format(ssh_host))
+            self._log_fail(f"--check-ssh-login: '{ssh_host}' is not reachable.")
         else:
-            self.watch.log.info(
-                "--check-ssh-login: '{}' is reachable.".format(ssh_host)
-            )
+            self.watch.log.info(f"--check-ssh-login: '{ssh_host}' is reachable.")
 
     def have_passed(self) -> bool:
         """
