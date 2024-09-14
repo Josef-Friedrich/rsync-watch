@@ -203,6 +203,20 @@ files = [
 ]
 
 [[package]]
+name = "click"
+version = "8.1.7"
+description = "Composable command line interface toolkit"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "click-8.1.7-py3-none-any.whl", hash = "sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28"},
+    {file = "click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -218,32 +232,24 @@ name = "command-watcher"
 version = "0.5.0"
 description = "Module to watch the execution of shell scripts. Both streams (`stdout` and `stderr`) are captured."
 optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "command_watcher-0.5.0-py3-none-any.whl", hash = "sha256:c4d86ff9f9ae7c877e2667c04fcc172f6a36af3a9d07694011cf1ee545230e2b"},
-    {file = "command_watcher-0.5.0.tar.gz", hash = "sha256:e0c16275b905e024e8555e4ef87aab2d57e2dd3e880110bcd9e46438fb1ad5a2"},
-]
+python-versions = "^3.10"
+files = []
+develop = false
 
 [package.dependencies]
-conf2levels = ">=0,<1"
-pretiac = ">=0,<1"
-termcolor = ">=1,<2"
-types-requests = ">=2,<3"
-types-termcolor = ">=1,<2"
+pretiac = {git = "https://github.com/Josef-Friedrich/PREtty-Typed-Icinga2-Api-Client_py.git"}
+pydantic = "^2"
+pyyaml = "^6"
+termcolor = "^1"
+types-pyyaml = "^6"
+types-requests = "^2"
+types-termcolor = "^1"
 
-[[package]]
-name = "conf2levels"
-version = "0.5.1"
-description = "A configuration reader which reads values stored in two key levels. The first key level is named “section” and the second level “key”."
-optional = false
-python-versions = ">=3.10,<4.0"
-files = [
-    {file = "conf2levels-0.5.1-py3-none-any.whl", hash = "sha256:64f4920e412309e98fc920e5343a78759ced21de4d985ff143cffc95017883f5"},
-    {file = "conf2levels-0.5.1.tar.gz", hash = "sha256:7e25fca08766d57d5eae86e0b7420734a83a87c410e9cf6bdbfddf96a3feb8ac"},
-]
-
-[package.dependencies]
-typing-extensions = ">=4.3.0,<5.0.0"
+[package.source]
+type = "git"
+url = "https://github.com/Josef-Friedrich/command-watcher.git"
+reference = "HEAD"
+resolved_reference = "3531766215ae0c4057ba3a23f558bec3ad2e6711"
 
 [[package]]
 name = "dist-meta"
@@ -639,19 +645,24 @@ name = "pretiac"
 version = "0.4.1"
 description = "pretiac: A PREtty Typed Icinga2 Api Client."
 optional = false
-python-versions = "<4.0,>=3.9"
-files = [
-    {file = "pretiac-0.4.1-py3-none-any.whl", hash = "sha256:488a18ca534d46f7ff7cd3a684253d9e708260028be1c2c0d286a6eabf4f02b1"},
-    {file = "pretiac-0.4.1.tar.gz", hash = "sha256:1d638b3eaf3a2aa19a01d67cdbf8828e94eba6d5b5cd067a1961e681a9c6b6d9"},
-]
+python-versions = "^3.9"
+files = []
+develop = false
 
 [package.dependencies]
-pydantic = ">=2,<3"
-pyyaml = ">=6,<7"
-requests = ">=2,<3"
-rich = ">=13,<14"
-types-pyyaml = ">=6,<7"
-types-requests = ">=2,<3"
+click = "^8"
+pydantic = "^2"
+pyyaml = "^6"
+requests = "^2"
+rich = "^13"
+types-pyyaml = "^6"
+types-requests = "^2"
+
+[package.source]
+type = "git"
+url = "https://github.com/Josef-Friedrich/PREtty-Typed-Icinga2-Api-Client_py.git"
+reference = "HEAD"
+resolved_reference = "aaa7c4a70805e246def547c418e2c20665d922ad"
 
 [[package]]
 name = "pydantic"
@@ -1340,4 +1351,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1489c7e60f214552d6d2fa592c944250948c5af17abeb784dff59ae35ef3d8c0"
+content-hash = "a04d4b87b217e26d590690282f38de557e3a236dc92c55e8f32a6eba0c645129"

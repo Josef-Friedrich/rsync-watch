@@ -1,18 +1,15 @@
 #! /usr/bin/env python
 
 
-import os
 import re
 import shlex
 import socket
 import typing
-from argparse import Namespace
 
-from command_watcher import CONFIG_READER_SPEC, CommandWatcherError, Watch
-from conf2levels import ConfigReader
+from command_watcher import CommandWatcherError, Watch
 
-from .check import ChecksCollection
-from .cli import ArgumentsDefault, __version__, get_argparser  # noqa: F401
+from rsync_watch.check import ChecksCollection
+from rsync_watch.cli import ArgumentsDefault, __version__, get_argparser  # noqa: F401
 
 watch: Watch
 
@@ -152,8 +149,8 @@ def format_service_name(host_name: str, src: str, dest: str) -> str:
     return result
 
 
-def build_rsync_command(args: ArgumentsDefault) -> typing.List[str]:
-    rsync_command: typing.List[str] = ["rsync", "-av", "--delete", "--stats"]
+def build_rsync_command(args: ArgumentsDefault) -> list[str]:
+    rsync_command: list[str] = ["rsync", "-av", "--delete", "--stats"]
 
     if args.dest_user_group:
         # https://stackoverflow.com/a/62982981
@@ -182,11 +179,8 @@ def main() -> None:
     # We need `args` for the configs.
     # We get the service name from the args.
     # A typical chicken-egg-situation.
-    config_reader: ConfigReader = ConfigReader(spec=CONFIG_READER_SPEC)
     parser = get_argparser()
-    config_reader.spec_to_argparse(parser)
     args = typing.cast(ArgumentsDefault, parser.parse_args())
-    del config_reader
 
     host_name: str
     if not args.host_name:
@@ -196,20 +190,7 @@ def main() -> None:
 
     service = format_service_name(host_name, args.src, args.dest)
 
-    ini_file = os.path.join("/", "etc", "command-watcher.ini")
-    if os.path.exists(ini_file):
-        config_reader = ConfigReader(
-            spec=CONFIG_READER_SPEC,
-            argparse=typing.cast(Namespace, args),
-            ini=ini_file,
-        )
-    else:
-        config_reader = ConfigReader(
-            spec=CONFIG_READER_SPEC,
-            argparse=(typing.cast(Namespace, args), {}),
-        )
-    global watch
-    watch = Watch(service_name=service, config_reader=config_reader)
+    watch = Watch(service_name=service)
 
     watch.log.info("Service name: {}".format(service))
 
@@ -228,7 +209,7 @@ def main() -> None:
         watch.report(status=1, custom_message=checks.messages)
         watch.log.info(checks.messages)
     else:
-        rsync_command: typing.List[str] = build_rsync_command(args)
+        rsync_command: list[str] = build_rsync_command(args)
 
         watch.log.info("Source: {}".format(args.src))
         watch.log.info("Destination: {}".format(args.dest))
@@ -238,7 +219,7 @@ def main() -> None:
         # define RERR_VANISHED   24      /* file(s) vanished on sender side */
         # Vanished files occure if you for example open thunderbird and
         # rsync-watch.py synchronizes your maildir folder.
-        watch.run(rsync_command, ignore_exceptions=[24])
+        watch.run(rsync_command, ignore_exceptions=[24])  # type: ignore
         stats: typing.Dict[str, int | float] = parse_stats(watch.stdout)
         watch.report(status=0, performance_data=stats)
         watch.log.debug(stats)
