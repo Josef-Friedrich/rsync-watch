@@ -3,20 +3,19 @@
 from datetime import datetime
 from importlib.metadata import version as get_version
 
-import sphinx_rtd_theme  # type: ignore
-
 html_theme = "sphinx_rtd_theme"
-html_theme_path: list[str] = [sphinx_rtd_theme.get_html_theme_path()]
 
 extensions: list[str] = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.jquery",
     "sphinxarg.ext",
 ]
 
 project = "rsync_watch"
-copyright: str = f"2029-{datetime.now().year}, Josef Friedrich"
+copyright: str = f"2019-{datetime.now().year}, Josef Friedrich"
 
 author = "Josef Friedrich"
 version: str = get_version("rsync_watch")
@@ -56,4 +55,5 @@ autodoc_default_options = {
     # The no-value option can be used instead of a blank annotation to show the type hint but not the value:
     "no-value": True,
 }
+
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
