@@ -5,12 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-<!-- insertion marker -->
 ## Unreleased
 
-<small>[Compare with latest](https://github.com/Josef-Friedrich/rsync-watch/compare/v0.7.2...HEAD)</small>
+<small>[Compare with latest](https://github.com/Josef-Friedrich/rsync-watch/compare/v0.8.0...HEAD)</small>
 
-<!-- insertion marker -->
+## [v0.8.0](https://github.com/Josef-Friedrich/rsync-watch/releases/tag/v0.8.0) - 2025-04-20
+
+<small>[Compare with v0.7.2](https://github.com/Josef-Friedrich/rsync-watch/compare/v0.7.2...v0.8.0)</small>
+
+### Added
+
+- Add option to ignore specific exceptions (none-zero exit codes)
+
+
 ## [v0.7.2](https://github.com/Josef-Friedrich/rsync-watch/releases/tag/v0.7.2) - 2024-02-15
 
 <small>[Compare with v0.7.1](https://github.com/Josef-Friedrich/rsync-watch/compare/v0.7.1...v0.7.2)</small>
