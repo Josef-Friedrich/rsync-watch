@@ -123,7 +123,7 @@ def get_argparser() -> ArgumentParser:
         "-v",
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=__version__),
+        version=f"%(prog)s {__version__}",
     )
 
     parser.add_argument("src", help="The source ([[USER@]HOST:]SRC)")
