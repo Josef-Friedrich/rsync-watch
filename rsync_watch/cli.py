@@ -1,6 +1,7 @@
-from argparse import ArgumentParser
+import argparse
+from argparse import ArgumentParser, Namespace
 from importlib import metadata
-from typing import List, Literal, Optional
+from typing import Any, Literal, Optional, Sequence
 
 __version__: str = metadata.version("rsync_watch")
 
@@ -8,7 +9,8 @@ __version__: str = metadata.version("rsync_watch")
 class ArgumentsDefault:
     host_name: str
     dest_user_group: Optional[str]
-    exclude: Optional[List[str]]
+    exclude: Optional[list[str]]
+    ignore_exceptions: list[int]
     rsync_args: Optional[str]
 
     # Checks
@@ -19,6 +21,29 @@ class ArgumentsDefault:
 
     src: str
     dest: str
+
+
+class CommaListAction(argparse.Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        exit_codes: set[int] = set()
+        # git://git.samba.org/rsync.git
+        # errcode.h
+        # define RERR_VANISHED   24      /* file(s) vanished on sender side */
+        # Vanished files occure if you for example open thunderbird and
+        # rsync-watch.py synchronizes your maildir folder.
+        exit_codes.add(24)
+        if values and isinstance(values, str):
+            for exit_code in values.split(","):
+                exit_codes.add(int(exit_code.strip()))
+        sorted = list(exit_codes)
+        sorted.sort()
+        setattr(namespace, self.dest, sorted)
 
 
 def get_argparser() -> ArgumentParser:
@@ -42,6 +67,14 @@ def get_argparser() -> ArgumentParser:
         "--exclude",
         action="append",
         help="See the documention of --exclude in the rsync manual.",
+    )
+
+    parser.add_argument(
+        "--ignore-exceptions",
+        action=CommaListAction,
+        default=[24],
+        help="A comma-separated list of exit codes that are not null and should be ignored. "
+        "24 is ignored by default.",
     )
 
     parser.add_argument(

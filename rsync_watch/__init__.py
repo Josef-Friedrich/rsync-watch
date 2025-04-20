@@ -214,12 +214,7 @@ def main() -> None:
         watch.log.info("Source: {}".format(args.src))
         watch.log.info("Destination: {}".format(args.dest))
 
-        # git://git.samba.org/rsync.git
-        # errcode.h
-        # define RERR_VANISHED   24      /* file(s) vanished on sender side */
-        # Vanished files occure if you for example open thunderbird and
-        # rsync-watch.py synchronizes your maildir folder.
-        watch.run(rsync_command, ignore_exceptions=[24])  # type: ignore
+        watch.run(rsync_command, ignore_exceptions=args.ignore_exceptions)  # type: ignore
         stats: typing.Dict[str, int | float] = parse_stats(watch.stdout)
         watch.report(status=0, performance_data=stats)
         watch.log.debug(stats)
