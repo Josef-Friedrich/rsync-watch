@@ -17,7 +17,7 @@ repository = "https://github.com/Josef-Friedrich/rsync-watch"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-command-watcher = "^0"
+command-watcher = { git = "https://github.com/Josef-Friedrich/command-watcher.git" }
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1"
