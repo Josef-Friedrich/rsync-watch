@@ -56,11 +56,13 @@ def _patch(
     watch_run_stdout: str = OUTPUT,
     watch_run_returncode: int = 0,
 ) -> PatchResult:
-    with patch("sys.argv", ["cmd"] + list(args)), patch(
-        "rsync_watch.check.subprocess.run"
-    ) as subprocess_run, patch("rsync_watch.Watch") as Watch, Capturing(
-        stream="stdout"
-    ) as stdout, Capturing(stream="stderr") as stderr:
+    with (
+        patch("sys.argv", ["cmd"] + list(args)),
+        patch("rsync_watch.check.subprocess.run") as subprocess_run,
+        patch("rsync_watch.Watch") as Watch,
+        Capturing(stream="stdout") as stdout,
+        Capturing(stream="stderr") as stderr,
+    ):
         watch = Watch.return_value
         watch.run.return_value.returncode = watch_run_returncode
         watch.stdout = watch_run_stdout
