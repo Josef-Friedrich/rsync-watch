@@ -1,8 +1,9 @@
-[tool.poetry]
+[project]
 name = "rsync_watch"
-version = "0.7.2"
+version = "0.8.0"
 description = "A Python script to monitor the execution of a rsync task."
-authors = ["Josef Friedrich <josef@friedrich.rocks>"]
+authors = [{ name = "Josef Friedrich", email = "josef@friedrich.rocks" }]
+requires-python = ">=3.10,<4"
 readme = "README.rst"
 license = "GPL-3.0-only"
 classifiers = [
@@ -11,26 +12,31 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
 ]
-repository = "https://github.com/Josef-Friedrich/rsync-watch"
+dependencies = ["command-watcher"]
 
-[tool.poetry.dependencies]
-python = "^3.10"
+[project.urls]
+Repository = "https://github.com/Josef-Friedrich/rsync-watch"
+
+[project.scripts]
+"rsync-watch.py" = "rsync_watch:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.11.2",
+    "pytest>=9.0.2",
+    "ruff>=0.14.14",
+    "stdout-stderr-capturing>=0.2.1",
+]
+
+[tool.uv]
+
+[tool.uv.sources]
 command-watcher = { git = "https://github.com/Josef-Friedrich/command-watcher.git" }
 
-[tool.poetry.group.dev.dependencies]
-mypy = "^1"
-pytest = "^8"
-readme-patcher = "^0"
-ruff = "^0"
-Sphinx = "^7"
-sphinx-rtd-theme = "^2"
-stdout-stderr-capturing = "^0"
-tox = "^4"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-"rsync-watch.py" = "rsync_watch:main"
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
