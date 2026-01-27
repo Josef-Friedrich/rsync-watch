@@ -30,8 +30,12 @@ format:
 	uv run ruff check --select I --fix .
 	uv run ruff format
 
-docs:
+docs: docs_readme_patcher docs_sphinx
+
+docs_readme_patcher:
 	uv tool run --isolated readme-patcher
+
+docs_sphinx:
 	rm -rf docs/_build
 	uv tool run --isolated --from sphinx --with . --with sphinx_rtd_theme --with sphinx-argparse sphinx-build -W -q docs docs/_build
 	xdg-open docs/_build/index.html
@@ -45,5 +49,3 @@ lint:
 
 type_check:
 	uv run mypy src/rsync_watch tests
-
-.PHONY: test install install_editable update upgrade build publish format docs lint pin_docs_requirements
