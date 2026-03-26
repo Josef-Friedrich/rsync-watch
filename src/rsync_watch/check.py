@@ -81,7 +81,7 @@ class ChecksCollection:
     def have_passed(self) -> bool:
         """
         :return: True in fall checks have passed else false.
-        :rtype: boolean"""
+        """
         if self.raise_exception and not self.passed:
             raise CommandWatcherError(self.messages)
         return self.passed

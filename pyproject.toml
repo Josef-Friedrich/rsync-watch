@@ -3,7 +3,7 @@ name = "rsync_watch"
 version = "0.8.0"
 description = "A Python script to monitor the execution of a rsync task."
 authors = [{ name = "Josef Friedrich", email = "josef@friedrich.rocks" }]
-requires-python = ">=3.10,<4"
+requires-python = ">=3.12,<4"
 readme = "README.rst"
 license = "GPL-3.0-only"
 classifiers = [
@@ -38,5 +38,5 @@ dev = [
 command-watcher = { git = "https://github.com/Josef-Friedrich/command-watcher.git" }
 
 [build-system]
-requires = ["uv_build>=0.9.26,<0.10.0"]
+requires = ["uv_build>=0.11.1,<0.12.0"]
 build-backend = "uv_build"

@@ -29,6 +29,7 @@ Features
 
     usage: rsync-watch.py [-h] [--host-name HOST_NAME]
                           [--dest-user-group USER_GROUP_NAME] [--exclude EXCLUDE]
+                          [--ignore-exceptions IGNORE_EXCEPTIONS]
                           [--rsync-args RSYNC_ARGS]
                           [--action-check-failed {exception,skip}]
                           [--check-file FILE_PATH] [--check-ping DESTINATION]
@@ -49,6 +50,9 @@ Features
                             Both the user name and the group name of the
                             destination will be set to this name.
       --exclude EXCLUDE     See the documention of --exclude in the rsync manual.
+      --ignore-exceptions IGNORE_EXCEPTIONS
+                            A comma-separated list of exit codes that are not null
+                            and should be ignored. 24 is ignored by default.
       --rsync-args RSYNC_ARGS
                             Rsync CLI arguments. Insert some rsync command line
                             arguments. Wrap all arguments in one string, for
