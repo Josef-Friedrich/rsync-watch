@@ -117,7 +117,7 @@ wheels = [
 [[package]]
 name = "command-watcher"
 version = "0.6.0"
-source = { git = "https://github.com/Josef-Friedrich/command-watcher.git#681a048e72fe342d57b3e95029710dd24b0c18fd" }
+source = { git = "https://github.com/Josef-Friedrich/command-watcher.git#1823af2012578324a653d351aba53f8bb8a55f59" }
 dependencies = [
     { name = "pretiac" },
     { name = "pydantic" },
